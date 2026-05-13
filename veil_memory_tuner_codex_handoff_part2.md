@@ -1,0 +1,1706 @@
+# Veil Memory Tuner — Codex Handoff Brief
+
+## Project Goal
+
+Build a standalone Roblox prototype for the **Veil Memory Tuner** that can later become a modular subsystem inside the larger **Veil Skiff** co-op game.
+
+The tuner should be designed as a reusable station/minigame system. The later skiff game should not need to know the internal details of selection, input, thread visuals, or action resolution. It should only receive clean gameplay results such as:
+
+- Thread stabilized
+- Static cleansed
+- Dissonance harmonized
+- Overload vented
+- Memory progress increased
+- Skiff system repaired or protected
+- Backlash triggered from a wrong action
+
+The current design favors a simple, readable action system:
+
+> The player targets one or more Veil threads, then applies one of four universal tuner actions.
+
+This replaces an earlier slider/dial concept with a faster, more Roblox-friendly thread triage game.
+
+---
+
+# Core Gameplay Concept
+
+The player operates a Veil tuner console that displays several living memory threads. Threads may develop visible problems. The player must quickly identify the problem, target the affected thread or threads, and apply the correct tuner action.
+
+The intended feel is:
+
+> A memory medic maintaining unstable living signal threads under pressure.
+
+The core loop is:
+
+1. Threads are visible in the tuner interface or physical station view.
+2. One or more threads develop a visible problem.
+3. The player targets the relevant thread or threads.
+4. The player applies one of four actions.
+5. Correct action clears or improves the problem.
+6. Wrong action causes instability, damage, wasted time, or backlash.
+7. Successful tuning advances memory reconstruction or protects a skiff system.
+
+---
+
+# Four Universal Tuner Actions
+
+The entire core game should use exactly four tuner actions so it maps cleanly to standard Xbox, PlayStation, and Switch controllers.
+
+## 1. Cleanse
+
+Purpose: remove interference.
+
+Use when a thread is:
+
+- Flickering with static
+- Covered in noise particles
+- Crackling
+- Turning muddy or corrupted
+- Producing false pulses
+
+Example problems:
+
+- Static
+- Corruption
+- Hail impact noise
+- Frost buildup, if designed as contamination
+
+## 2. Anchor
+
+Purpose: stabilize position and prevent drift.
+
+Use when a thread is:
+
+- Pulling away from the bundle
+- Wobbling heavily
+- Stretching thin
+- Slipping or sliding
+- Being pushed by wind
+- About to snap
+
+Example problems:
+
+- Drift
+- Wind shear
+- Fraying
+- Skiff control instability
+- Frost slip, if designed as loss of traction
+
+## 3. Harmonize
+
+Purpose: restore rhythm, resonance, or pattern alignment.
+
+Use when a thread is:
+
+- Pulsing off-beat
+- Wrong color or tone
+- Clashing with nearby threads
+- Split between memory patterns
+- Out of sync with a partner thread
+
+Example problems:
+
+- Dissonance
+- Echo mismatch
+- Phase clash
+- Memory sync failure
+
+## 4. Vent
+
+Purpose: safely release excess pressure or energy.
+
+Use when a thread is:
+
+- Too bright
+- Swollen
+- Shaking violently
+- Carrying a fast dangerous surge
+- About to burst
+
+Example problems:
+
+- Overload
+- Backlash buildup
+- Heat/pressure surge
+- Energy jam
+
+---
+
+# Controller Layout
+
+Use the four shoulder/trigger inputs as the four tuner actions.
+
+Suggested default mapping:
+
+| Physical Input | Xbox | PlayStation | Switch | Action |
+|---|---|---|---|---|
+| Left top bumper | LB | L1 | L | Cleanse |
+| Left bottom trigger | LT | L2 | ZL | Anchor |
+| Right top bumper | RB | R1 | R | Harmonize |
+| Right bottom trigger | RT | R2 | ZR | Vent |
+
+Reasoning:
+
+- Left side = maintenance and defensive stabilization.
+- Right side = resonance and energy management.
+- Top inputs feel lighter and faster.
+- Bottom inputs feel heavier or more forceful.
+
+---
+
+# Selection Model
+
+The tuner uses two layers of targeting:
+
+## 1. Temporary Focus
+
+A thread is temporarily targeted only while the player is actively pointing at it, touching it, aiming at it, or holding its key.
+
+Player-facing term: **in focus**.
+
+## 2. Locked Selection
+
+A thread remains targeted after the player stops pointing at it.
+
+Player-facing term: **marked**.
+
+## Effective Targeting Rule
+
+Actions apply to the union of focused and marked threads.
+
+```text
+Effective targets = focused threads + marked threads
+```
+
+This allows simple beginner play:
+
+> Point at a thread and press an action.
+
+And advanced play:
+
+> Mark several threads, hover another thread, then apply one action to the whole target set.
+
+---
+
+# Input Schemes
+
+The game should support multiple input modes while feeding the same internal selection and action systems.
+
+## Mouse + Keyboard
+
+| Input | Behavior |
+|---|---|
+| Hover thread | Temporarily focus thread |
+| Left click thread | Toggle marked state |
+| Left click drag | Paint-toggle marked state while passing over threads |
+| Right click empty/center | Clear all marks by default; configurable to smart select/deselect all |
+| Q/W/E/R | Apply the four tuner actions |
+
+Suggested keyboard action mapping:
+
+| Key | Action |
+|---|---|
+| Q | Cleanse |
+| W | Anchor |
+| E | Harmonize |
+| R | Vent |
+
+## Pure Mouse
+
+Pure mouse mode allows the player to play without keyboard action keys.
+
+| Input | Behavior |
+|---|---|
+| Hover thread | Temporarily focus thread |
+| Left click thread | Toggle marked state |
+| Left click drag | Paint-toggle marked state |
+| Right click empty/center | Clear all marks by default; configurable |
+| Scroll wheel | Cycle current tuner action |
+| Middle click / scroll click | Apply current selected action |
+
+The UI should clearly show the currently selected action near the cursor or in a small action selector.
+
+Suggested scroll order:
+
+```text
+Cleanse → Anchor → Harmonize → Vent → Cleanse
+```
+
+Accessibility alternatives should later include:
+
+- Side mouse button applies current action
+- Double click applies current action
+- On-screen button applies current action
+
+## Controller
+
+| Input | Behavior |
+|---|---|
+| Aim stick toward thread | Temporarily focus aimed thread |
+| Shoulder/trigger buttons | Apply four tuner actions |
+| Hold stick button while aiming | Paint-toggle marks as aim passes over threads |
+| Press stick button while centered | Smart all command |
+
+Smart all command default:
+
+- If any threads are marked: clear all marks.
+- If no threads are marked: mark all active threads.
+
+Optional setting:
+
+- Always toggle all marks instead.
+
+## Touchscreen
+
+| Input | Behavior |
+|---|---|
+| Touch thread | Temporarily focus that thread |
+| Drag finger across threads | Temporarily focus thread currently under finger |
+| Multi-touch | Multiple temporary focused threads |
+| Tap thread | Toggle marked state |
+| Center button | Smart mark all / clear marks |
+| On-screen action buttons | Apply four tuner actions |
+
+Touch does not need drag-to-lock by default because multi-touch already supports multiple temporary focused threads.
+
+## Keyboard-Only
+
+Keyboard users can target threads using thread keys.
+
+Suggested default:
+
+| Key | Behavior |
+|---|---|
+| 1–6 | Focus corresponding thread while held |
+| Configurable Mark Modifier | If held when a thread key is released, the thread stays marked |
+| Space | Smart mark all / clear marks |
+| Q/W/E/R | Apply four tuner actions |
+
+The Mark Modifier should be configurable. Possible defaults:
+
+- Tab
+- Shift
+- Ctrl
+- Enter
+
+Recommended MVP default: **Tab** or **Shift**, but expose as a configurable option.
+
+Keyboard-only behavior:
+
+```text
+Thread key down:
+    add thread to focused set
+
+Thread key up:
+    if mark modifier is held:
+        remove thread from focused set
+        add thread to marked set
+    else:
+        remove thread from focused set
+
+Space:
+    if any thread is marked:
+        clear all marks
+    else:
+        mark all active threads
+```
+
+Optional advanced behavior:
+
+```text
+Mark Modifier + thread key tap:
+    toggle marked state for that thread
+```
+
+---
+
+# Visual Selection States
+
+Threads need distinct visuals for focus and marking.
+
+## Stable / Untargeted
+
+- Normal glow
+- Normal pulse
+- No outline
+
+## Focused
+
+Temporary targeting.
+
+Suggested visuals:
+
+- Soft outline
+- Slight brightening
+- Thread subtly lifts or thickens
+- Reticle or cursor highlight
+
+## Marked
+
+Persistent targeting.
+
+Suggested visuals:
+
+- Stronger persistent outline
+- Small glyph/knot/marker attached to thread
+- Slightly stronger glow
+
+## Focused + Marked
+
+Both temporary and persistent targeting.
+
+Suggested visuals:
+
+- Brightest outline
+- Active glyph pulse
+- Stronger audio cue
+- Thread visibly rises or intensifies
+
+---
+
+# MVP Thread Problems
+
+Start with one clear problem for each of the four actions.
+
+| Problem | Visual Behavior | Correct Action | Failure If Ignored |
+|---|---|---|---|
+| Static | Flickering, sparks, noise crawling along thread | Cleanse | Memory quality drops, nearby noise spreads |
+| Drift | Thread bends/pulls away from bundle | Anchor | Thread frays, breaks, or causes steering instability later |
+| Dissonance | Thread pulses off-beat or wrong color | Harmonize | Memory reconstruction stalls or nearby threads desync |
+| Overload | Thread swells, glows too bright, dangerous pulse races through | Vent | Backlash burst, damage, instability spike |
+
+Early levels can spawn only one problem on one thread at a time. Later levels can spawn multiple simultaneous problems.
+
+---
+
+# Difficulty Progression
+
+## Stage 1: Live Focus Only
+
+Teach:
+
+> Point at the affected thread and press the correct action.
+
+No locked selection needed.
+
+Design:
+
+- One problem at a time
+- One affected thread at a time
+- Generous response windows
+- Clear visual cues
+
+## Stage 2: Faster Single-Thread Problems
+
+Teach speed and recognition.
+
+Design:
+
+- Still one affected thread at a time
+- Faster pulses
+- Shorter response windows
+- More frequent problems
+
+## Stage 3: Locked Selection
+
+Teach marking.
+
+Design:
+
+- Multiple threads can need the same action
+- Player can mark them, then apply one action
+
+## Stage 4: Multi-Thread Mechanics
+
+Teach bundle interactions.
+
+Examples:
+
+- Harmonize two or more dissonant threads together
+- Anchor a drifting group
+- Cleanse a contaminated cluster
+- Vent an overloaded bundle
+
+## Stage 5: Skiff-Style Pressure
+
+Add hazards and consequences.
+
+Examples:
+
+- Wind causes drift spikes
+- Frost causes input delay or slippery thread behavior
+- Hail creates false pulses or impact noise
+- Corruption spreads between nearby threads
+- Overload backlash damages skiff systems
+
+---
+
+# Core Architecture Recommendation
+
+The design should be input-agnostic and modular.
+
+Suggested Roblox structure:
+
+```text
+ReplicatedStorage
+  Shared
+    TunerTypes.lua
+    TunerConfig.lua
+    SelectionState.lua
+    TunerActionTypes.lua
+    ThreadProblemTypes.lua
+    TunerResultTypes.lua
+
+ServerScriptService
+  Services
+    TunerChallengeService.lua
+    ThreadProblemService.lua
+    TunerActionResolver.lua
+    TunerConsequenceService.lua
+    MemoryRewardService.lua
+
+StarterPlayer
+  StarterPlayerScripts
+    TunerClientController.lua
+    InputAdapters
+      MouseInputAdapter.lua
+      KeyboardInputAdapter.lua
+      ControllerInputAdapter.lua
+      TouchInputAdapter.lua
+
+StarterGui
+  TunerGui
+    ThreadView
+    ActionDisplay
+    StabilityMeter
+    MemoryProgressMeter
+    TouchActionButtons
+
+Workspace
+  TunerStation
+    ConsoleModel
+    ThreadBundleVisual
+    ProximityPrompt
+```
+
+---
+
+# Module Responsibilities
+
+## SelectionState
+
+Tracks focused and marked threads.
+
+Example shape:
+
+```lua
+SelectionState = {
+    focused = {
+        Thread_1 = true,
+        Thread_3 = true,
+    },
+
+    marked = {
+        Thread_2 = true,
+    }
+}
+```
+
+Core functions:
+
+```lua
+FocusThread(threadId)
+UnfocusThread(threadId)
+ToggleMarkThread(threadId)
+MarkThread(threadId)
+UnmarkThread(threadId)
+ClearMarks()
+MarkAll(activeThreadIds)
+SmartAll(activeThreadIds)
+GetEffectiveTargets()
+```
+
+`GetEffectiveTargets()` returns the union of focused and marked threads.
+
+## Input Adapters
+
+Each platform-specific input adapter should update `SelectionState` and call the action request function.
+
+Input adapters should not resolve gameplay rules.
+
+They only translate user input into generic commands:
+
+```lua
+SelectionState:FocusThread(threadId)
+SelectionState:ToggleMarkThread(threadId)
+RequestTunerAction(actionType)
+```
+
+## TunerActionResolver
+
+Receives action requests and determines success/failure.
+
+Example request:
+
+```lua
+{
+    playerId = player.UserId,
+    actionType = "Cleanse",
+    targetThreads = { "Thread_2", "Thread_4" },
+    timestamp = os.clock()
+}
+```
+
+Example result:
+
+```lua
+{
+    actionType = "Cleanse",
+    targetThreads = { "Thread_2", "Thread_4" },
+    successes = {
+        Thread_2 = true,
+        Thread_4 = false,
+    },
+    stabilityChange = 8,
+    integrityChange = -2,
+    memoryProgressChange = 3,
+    backlash = false
+}
+```
+
+## ThreadProblemService
+
+Spawns, clears, and escalates thread problems.
+
+Core functions:
+
+```lua
+SpawnProblem(threadId, problemType)
+ClearProblem(threadId)
+EscalateProblem(threadId)
+GetProblem(threadId)
+```
+
+## TunerChallengeService
+
+Owns the active challenge state.
+
+Responsibilities:
+
+- Start challenge
+- Stop challenge
+- Track timer
+- Track active threads
+- Track global stability
+- Track memory progress
+- Dispatch problem spawns
+- End with success/failure summary
+
+Potential API:
+
+```lua
+StartTuningChallenge(player, challengeConfig)
+CancelTuningChallenge(player, reason)
+GetChallengeState(player)
+OnTunerChallengeComplete(callback)
+```
+
+## TunerConsequenceService
+
+Converts tuner results into standalone or skiff consequences.
+
+Standalone examples:
+
+- Increase score
+- Advance memory progress
+- Damage thread integrity
+- Trigger backlash visual
+- Unlock memory fragment
+
+Future skiff examples:
+
+- Cleansed static improves weapon accuracy
+- Anchored drift improves steering stability
+- Vented overload protects shields
+- Harmonized memory reveals map/path/story data
+
+---
+
+# Data Types
+
+## Thread Model
+
+```lua
+Thread = {
+    id = "Thread_1",
+    status = "Stable",
+    problem = nil,
+    integrity = 100,
+    pulseSpeed = 1.0,
+    visualIntensity = 1.0,
+    isActive = true,
+    isResolved = false,
+    isBroken = false,
+}
+```
+
+Possible statuses:
+
+```text
+Stable
+Static
+Drifting
+Dissonant
+Overloaded
+Frozen
+Frayed
+Corrupted
+Resolved
+Broken
+```
+
+## Problem Definition
+
+```lua
+ProblemDefinition = {
+    id = "Static",
+    correctAction = "Cleanse",
+    baseDuration = 6.0,
+    escalationTime = 4.0,
+    damageOnExpire = 10,
+    stabilityPenalty = 5,
+    visualCue = "StaticParticles",
+    soundCue = "StaticCrackle",
+}
+```
+
+## Action Definition
+
+```lua
+ActionDefinition = {
+    id = "Cleanse",
+    displayName = "Cleanse",
+    cooldown = 0.25,
+    maxTargets = nil,
+    icon = "CleanseIcon",
+    soundCue = "CleansePulse",
+}
+```
+
+## Challenge Config
+
+```lua
+ChallengeConfig = {
+    threadCount = 4,
+    duration = 60,
+    targetMemoryProgress = 100,
+    startingStability = 100,
+    problemSpawnInterval = 4.0,
+    maxSimultaneousProblems = 1,
+    allowedProblems = { "Static", "Drift", "Dissonance", "Overload" },
+    allowMarkedSelection = false,
+    difficulty = 1,
+    context = {
+        mode = "Standalone",
+        targetSystem = "MemoryCore",
+    }
+}
+```
+
+Future skiff context example:
+
+```lua
+context = {
+    mode = "Skiff",
+    targetSystem = "EngineThreads",
+    hazard = "VeilFrost",
+}
+```
+
+---
+
+# Action Resolution Rules
+
+MVP rule:
+
+```text
+If selected thread has a problem and action matches the problem's correct action:
+    clear problem
+    increase stability or memory progress
+Else:
+    apply a small penalty
+```
+
+MVP should avoid complex partial scoring at first.
+
+Potential first version:
+
+```lua
+if thread.problem and ProblemDefinitions[thread.problem].correctAction == actionType then
+    success = true
+    ClearProblem(thread.id)
+    memoryProgress += 5
+    stability += 2
+else
+    success = false
+    stability -= 3
+    thread.integrity -= 2
+end
+```
+
+Later additions:
+
+- Timing windows
+- Combo bonuses
+- Multi-target action falloff
+- Problem severity
+- Chain reactions
+- Wrong action-specific penalties
+- Cooldowns
+- Skiff system-specific outcomes
+
+---
+
+# MVP Build Milestones
+
+## Milestone 1: Static Thread Display
+
+Goal: show 4–6 Veil threads.
+
+Deliverables:
+
+- Tuner station or UI scene
+- Thread visuals
+- Basic focused and marked states
+- Placeholder art acceptable
+
+## Milestone 2: Mouse Hover Targeting + Four Actions
+
+Goal: prove simplest core loop.
+
+Deliverables:
+
+- Hover focuses thread
+- Q/W/E/R apply Cleanse/Anchor/Harmonize/Vent
+- One problem type can spawn
+- Correct action clears problem
+
+## Milestone 3: Four Problem Types
+
+Goal: one problem per action.
+
+Deliverables:
+
+- Static → Cleanse
+- Drift → Anchor
+- Dissonance → Harmonize
+- Overload → Vent
+- Visual distinction for each problem
+
+## Milestone 4: Locked Selection
+
+Goal: allow multi-thread targeting.
+
+Deliverables:
+
+- Mouse click toggles marked state
+- Marked + focused threads are both targeted
+- Clear all marks command
+
+## Milestone 5: Challenge Loop
+
+Goal: make it a playable minigame.
+
+Deliverables:
+
+- Timed challenge
+- Problem spawning
+- Stability meter
+- Memory progress meter
+- Success/failure condition
+- Basic rewards/results summary
+
+## Milestone 6: Controller Support
+
+Goal: prove console-compatible control scheme.
+
+Deliverables:
+
+- Stick aims/focuses thread
+- Shoulder/trigger actions work
+- Stick button marking works
+- Centered stick smart all command works
+
+## Milestone 7: Pure Mouse + Touch Support
+
+Goal: broaden input support.
+
+Deliverables:
+
+- Scroll wheel cycles current action
+- Middle click applies current action
+- Touch focus/tap/multitouch action buttons
+
+## Milestone 8: Skiff Integration Interface
+
+Goal: make the tuner reusable later.
+
+Deliverables:
+
+- Public challenge API
+- Clean result events
+- Context-based consequences
+- No hard dependency on standalone game rewards
+
+---
+
+# Required Placeholder Assets for MVP
+
+The next stage is asset planning. For the prototype, placeholder assets are acceptable, but the system should be built so final assets can be swapped in.
+
+## Models / 3D
+
+- Tuner console model
+- Thread bundle holder/frame
+- Optional floating crystal/memory core
+- Optional skiff-compatible tuner station shell
+
+## Thread Visuals
+
+- Stable glowing thread
+- Focused thread highlight
+- Marked thread highlight/glyph
+- Static problem effect
+- Drift problem effect
+- Dissonance problem effect
+- Overload problem effect
+- Success pulse
+- Wrong action backlash pulse
+
+## UI Graphics
+
+- Cleanse icon
+- Anchor icon
+- Harmonize icon
+- Vent icon
+- Current action selector for pure mouse mode
+- Stability meter
+- Memory progress meter
+- Thread status markers
+- Touchscreen action buttons
+
+## Sounds
+
+- Thread ambient hum
+- Focus hover tone
+- Mark/unmark click or glyph sound
+- Cleanse action sound
+- Anchor action sound
+- Harmonize action sound
+- Vent action sound
+- Correct action success sound
+- Wrong action error sound
+- Backlash burst
+- Memory fragment reveal sound
+- Challenge start/end sound
+
+## Optional Music / Ambience
+
+- Low Veil ambience loop
+- Rising tension layer as instability increases
+- Soft musical harmony layer as memory progress increases
+
+---
+
+# First Codex Task Recommendation
+
+Start with the MVP code skeleton and mouse + keyboard prototype.
+
+Specific first task:
+
+> Build a Roblox tuner prototype with four visible threads. Hovering a thread focuses it. Q/W/E/R apply Cleanse, Anchor, Harmonize, and Vent to the focused thread. Each thread can randomly develop one of four problems, each requiring its matching action. Correct actions clear problems and increase memory progress. Wrong actions reduce stability.
+
+Avoid overbuilding assets in the first pass. Use simple Parts, Beams, BillboardGuis, and placeholder colors/effects until the gameplay loop works.
+
+---
+
+# Design Rule Going Forward
+
+Every future hazard or mechanic should be expressible through:
+
+1. Which threads are targeted
+2. Which of the four actions is applied
+3. Whether timing, grouping, or context changes the result
+
+Do not add a fifth core action unless absolutely necessary.
+
+The central design should remain:
+
+> Target thread(s), then apply Cleanse, Anchor, Harmonize, or Vent.
+
+
+---
+
+# Roblox Visual Implementation Handoff for Codex
+
+## Visual Goal
+
+The generated concept art suggests a polished direction: a mystical sci-fi/fantasy tuner station with glowing memory threads, ornate HUD panels, controller/action prompts, stability and memory meters, and readable problem states.
+
+For Roblox, do not try to reproduce the concept art all at once. Build it in layers:
+
+1. **Playable graybox**
+2. **Readable thread-state VFX**
+3. **Tuner station set dressing**
+4. **HUD polish**
+5. **Sound and camera polish**
+
+The first milestone should prioritize readability and interaction over final beauty.
+
+Roblox systems to use:
+
+- **Beam** objects for memory threads between Attachments.
+- **ParticleEmitter** objects for static, sparks, wisps, overload shards, and action bursts.
+- **BillboardGui** for labels, focus reticles, marked glyphs, and thread status markers.
+- **SurfaceGui** for console screens and in-world station panels.
+- **TweenService** for glow pulsing, UI bar movement, selection feedback, and smooth transitions.
+- **UserInputService** and/or Roblox's Input Action System for keyboard, mouse, gamepad, and touch input.
+- **ProximityPrompt** for entering/exiting the tuner station from the 3D world.
+
+---
+
+# First Roblox Prototype Scope
+
+Build a small playable station scene with:
+
+- 4 memory threads
+- 1 central memory core
+- 1 tuner console
+- Mouse hover focus
+- Mouse click marking
+- Q/W/E/R actions
+- Stability meter
+- Memory progress meter
+- Random problem spawning
+- Correct/wrong action feedback
+
+Avoid final 3D models and final textures at first. Use placeholder Parts, Beams, simple particle effects, and basic UI.
+
+---
+
+# Scene Layout
+
+Suggested Workspace hierarchy:
+
+```text
+Workspace
+  TunerPrototype
+    TunerStation
+      Console
+        ConsoleBase
+        ConsoleScreenPart
+        ProximityPrompt
+      MemoryCore
+        CorePart
+        CoreAttachment
+      ThreadAnchors
+        Anchor_01
+          StartAttachment
+        Anchor_02
+          StartAttachment
+        Anchor_03
+          StartAttachment
+        Anchor_04
+          StartAttachment
+      Threads
+        Thread_01
+        Thread_02
+        Thread_03
+        Thread_04
+      CameraFocusPoint
+```
+
+Each thread should connect from an anchor attachment to the central memory core attachment or to a high/low offset attachment near the core.
+
+Recommended initial arrangement:
+
+```text
+Thread_01   left-high
+Thread_02   left-low
+Thread_03   right-low
+Thread_04   right-high
+MemoryCore  center
+Console     foreground
+```
+
+This creates a readable fan/bundle shape.
+
+---
+
+# Thread Object Structure
+
+Each thread model/folder should contain:
+
+```text
+Thread_01
+  Beam_Main
+  Beam_Glow
+  Beam_Problem
+  FocusReticleGui
+  MarkedGlyphGui
+  ProblemLabelGui
+  ProblemParticles
+  NodePart
+  NodeAttachment
+```
+
+## Beam_Main
+
+Primary colored thread.
+
+## Beam_Glow
+
+Larger transparent aura around the thread.
+
+## Beam_Problem
+
+Used only when a problem is active.
+
+Examples:
+
+- Static: flickering white/purple overlay
+- Drift: cyan/blue offset/curved overlay
+- Dissonance: violet/green pulse overlay
+- Overload: red/pink bright overlay
+
+## NodePart
+
+Small invisible or semi-visible part near the center of the thread for:
+
+- mouse hit detection
+- hover/focus target
+- BillboardGui attachment
+- particles
+
+Make it easy to click/hover, even if the visual thread is thin.
+
+---
+
+# Visual State Rules
+
+## Stable
+
+- Calm blue/gold/white beam
+- Slow pulse
+- Minimal particles
+- No warning glyph
+
+## Static
+
+Correct action: Cleanse
+
+- White/purple crackling particles
+- Flickering beam transparency
+- Small static bursts around the node
+- Problem icon: waveform/spark/noise glyph
+
+## Drift
+
+Correct action: Anchor
+
+- Beam curves or anchor/node shifts away from ideal path
+- Cyan wisps trailing outward
+- Slow sideways motion
+- Problem icon: wavy line or slipping thread glyph
+
+Implementation shortcut:
+
+- Move the thread's end/node attachment slightly off alignment using TweenService.
+- Add blue/cyan particles at the node.
+
+## Dissonance
+
+Correct action: Harmonize
+
+- Purple/green pulse mismatch
+- Alternating colors or brightness
+- Waveform icon
+- Brief expansion/contraction of beam width
+
+Implementation shortcut:
+
+- Tween Beam_Main.Width0/Width1 or color over time.
+- Add a pulsing BillboardGui ring.
+
+## Overload
+
+Correct action: Vent
+
+- Red/pink intense glow
+- Swollen node
+- Fast sparks/shards
+- Warning icon
+- Optional heartbeat/alert sound
+
+Implementation shortcut:
+
+- Increase beam width and brightness.
+- Enable red ParticleEmitter.
+- Add shaking/pulsing node effect.
+
+---
+
+# Focus and Mark Visuals
+
+## Focused Thread
+
+Temporary target from mouse hover, joystick aim, touch, or held thread key.
+
+Visuals:
+
+- Soft reticle around node
+- Slight brightening of Beam_Main and Beam_Glow
+- Small hover sound
+- Optional label: “Focused” or thread number
+
+## Marked Thread
+
+Persistent target.
+
+Visuals:
+
+- Diamond/rune BillboardGui near node
+- Persistent outline/ring
+- Slightly stronger glow
+
+## Effective Target
+
+A thread is effectively targeted if it is focused or marked.
+
+When an action button is pressed, briefly pulse all effective targets before resolving.
+
+---
+
+# HUD MVP
+
+Create a simple `TunerHud` in `StarterGui`:
+
+```text
+TunerHud
+  RootFrame
+    TopBar
+      StabilityMeter
+      MemoryProgressMeter
+    ActionBar
+      CleanseButton
+      AnchorButton
+      HarmonizeButton
+      VentButton
+    FocusPanel
+      FocusedThreadLabel
+      FocusedProblemLabel
+    MessagePanel
+      FeedbackText
+```
+
+## Action Bar
+
+Display four actions:
+
+```text
+Q Cleanse
+W Anchor
+E Harmonize
+R Vent
+```
+
+Later swap key labels based on input device:
+
+```text
+LB Cleanse
+LT Anchor
+RB Harmonize
+RT Vent
+```
+
+## Meters
+
+- Stability starts at 100.
+- Memory Progress starts at 0.
+- Correct action increases memory progress and may restore stability slightly.
+- Wrong action reduces stability.
+- Problem expiration reduces stability and/or thread integrity.
+
+---
+
+# Module/File Structure for First Codex Pass
+
+Suggested initial files:
+
+```text
+ReplicatedStorage
+  VeilTuner
+    TunerConfig.lua
+    TunerTypes.lua
+    SelectionState.lua
+    ThreadState.lua
+    ActionResolver.lua
+
+ServerScriptService
+  VeilTunerServer
+    TunerChallengeService.server.lua
+
+StarterPlayer
+  StarterPlayerScripts
+    VeilTunerClient.client.lua
+    InputAdapters
+      MouseKeyboardInputAdapter.lua
+
+StarterGui
+  TunerHud
+```
+
+Keep controller and touch adapters stubbed or postponed until mouse + keyboard works.
+
+---
+
+# TunerConfig.lua
+
+Codex should create a single config table for action names, problem names, mappings, cooldowns, and default challenge values.
+
+Example:
+
+```lua
+local TunerConfig = {}
+
+TunerConfig.Actions = {
+    Cleanse = {
+        id = "Cleanse",
+        displayName = "Cleanse",
+        keyCode = Enum.KeyCode.Q,
+        color = Color3.fromRGB(120, 220, 255),
+    },
+    Anchor = {
+        id = "Anchor",
+        displayName = "Anchor",
+        keyCode = Enum.KeyCode.W,
+        color = Color3.fromRGB(255, 210, 105),
+    },
+    Harmonize = {
+        id = "Harmonize",
+        displayName = "Harmonize",
+        keyCode = Enum.KeyCode.E,
+        color = Color3.fromRGB(185, 120, 255),
+    },
+    Vent = {
+        id = "Vent",
+        displayName = "Vent",
+        keyCode = Enum.KeyCode.R,
+        color = Color3.fromRGB(255, 90, 100),
+    },
+}
+
+TunerConfig.Problems = {
+    Static = {
+        id = "Static",
+        displayName = "Static",
+        correctAction = "Cleanse",
+        color = Color3.fromRGB(220, 220, 255),
+        duration = 7,
+    },
+    Drift = {
+        id = "Drift",
+        displayName = "Drift",
+        correctAction = "Anchor",
+        color = Color3.fromRGB(90, 200, 255),
+        duration = 7,
+    },
+    Dissonance = {
+        id = "Dissonance",
+        displayName = "Dissonance",
+        correctAction = "Harmonize",
+        color = Color3.fromRGB(190, 100, 255),
+        duration = 7,
+    },
+    Overload = {
+        id = "Overload",
+        displayName = "Overload",
+        correctAction = "Vent",
+        color = Color3.fromRGB(255, 70, 90),
+        duration = 6,
+    },
+}
+
+TunerConfig.Challenge = {
+    threadCount = 4,
+    startingStability = 100,
+    targetMemoryProgress = 100,
+    correctProgressGain = 8,
+    correctStabilityGain = 1,
+    wrongStabilityPenalty = 5,
+    expiredProblemPenalty = 8,
+    problemSpawnInterval = 3.5,
+    maxSimultaneousProblems = 1,
+}
+
+return TunerConfig
+```
+
+---
+
+# SelectionState.lua
+
+Purpose:
+
+Track focused and marked thread ids independent of input device.
+
+Required API:
+
+```lua
+local SelectionState = {}
+SelectionState.__index = SelectionState
+
+function SelectionState.new()
+    return setmetatable({
+        focused = {},
+        marked = {},
+    }, SelectionState)
+end
+
+function SelectionState:FocusThread(threadId)
+    self.focused[threadId] = true
+end
+
+function SelectionState:UnfocusThread(threadId)
+    self.focused[threadId] = nil
+end
+
+function SelectionState:ToggleMarkThread(threadId)
+    if self.marked[threadId] then
+        self.marked[threadId] = nil
+    else
+        self.marked[threadId] = true
+    end
+end
+
+function SelectionState:ClearMarks()
+    table.clear(self.marked)
+end
+
+function SelectionState:GetEffectiveTargets()
+    local targets = {}
+    local seen = {}
+
+    for threadId in pairs(self.marked) do
+        if not seen[threadId] then
+            table.insert(targets, threadId)
+            seen[threadId] = true
+        end
+    end
+
+    for threadId in pairs(self.focused) do
+        if not seen[threadId] then
+            table.insert(targets, threadId)
+            seen[threadId] = true
+        end
+    end
+
+    return targets
+end
+
+return SelectionState
+```
+
+---
+
+# ActionResolver.lua
+
+Purpose:
+
+Resolve action success or failure against current thread problems.
+
+Expected API:
+
+```lua
+ResolveAction(actionType, targetThreadStates, config)
+```
+
+Expected output:
+
+```lua
+{
+    actionType = "Cleanse",
+    targetThreads = { "Thread_01" },
+    perThread = {
+        Thread_01 = {
+            success = true,
+            previousProblem = "Static",
+            clearedProblem = true,
+        },
+    },
+    memoryProgressChange = 8,
+    stabilityChange = 1,
+    backlash = false,
+}
+```
+
+MVP rules:
+
+- If target has no problem: wrong/neutral action; reduce stability slightly or do nothing depending on difficulty.
+- If target problem's correct action matches actionType: clear problem.
+- If action does not match: reduce stability.
+- If multiple targets: resolve each target separately.
+
+---
+
+# Client Prototype Behavior
+
+For the first pass, it is acceptable to keep most state client-side for fast prototyping. Later, move authoritative challenge state to server.
+
+Client should:
+
+1. Create or locate thread objects.
+2. Attach hover/click detection to each thread's NodePart.
+3. Update `SelectionState` on hover/click.
+4. Spawn random problems on a timer.
+5. Listen for Q/W/E/R.
+6. Apply action to effective targets.
+7. Update visuals and HUD.
+
+Once the loop works, move problem spawning and action resolution to `TunerChallengeService` on the server.
+
+---
+
+# Mouse + Keyboard Prototype Rules
+
+## Hover Focus
+
+- Mouse enters thread NodePart: focus thread.
+- Mouse leaves thread NodePart: unfocus thread.
+
+Use large invisible NodeParts to make hover easy.
+
+## Marking
+
+- Left click thread NodePart: toggle marked state.
+- Optional later: left-drag paint toggles marked state.
+
+## Actions
+
+- Q = Cleanse
+- W = Anchor
+- E = Harmonize
+- R = Vent
+
+Action applies to `SelectionState:GetEffectiveTargets()`.
+
+If no effective targets, show a soft error message.
+
+---
+
+# Problem Spawning MVP
+
+Every `problemSpawnInterval` seconds:
+
+1. Count current active problems.
+2. If count is below `maxSimultaneousProblems`, pick a stable thread.
+3. Pick random problem from Static, Drift, Dissonance, Overload.
+4. Apply problem to thread.
+5. Update visual state.
+
+Each problem should have a simple expiration timer. If not resolved before duration expires:
+
+- Clear or escalate the problem.
+- Reduce stability.
+- Play warning/backlash effect.
+
+For the very first version, simply clear the expired problem and reduce stability.
+
+---
+
+# Visual Update Function
+
+Codex should implement one central function to apply thread visuals based on thread state.
+
+Pseudo-API:
+
+```lua
+UpdateThreadVisual(threadId, threadState, selectionState)
+```
+
+Responsibilities:
+
+- Set beam colors.
+- Enable/disable problem particles.
+- Enable/disable focus reticle.
+- Enable/disable marked glyph.
+- Set problem label text.
+- Pulse/effects on correct/wrong action.
+
+This prevents visual logic from being scattered across input and gameplay code.
+
+---
+
+# Minimal Placeholder Assets
+
+Use built-in primitives first.
+
+## 3D
+
+- Console: wedge/block/cylinder parts.
+- Memory core: glowing sphere or crystal-shaped part.
+- Thread anchors: small cylinders or pylons.
+- Node parts: transparent spheres with CanQuery/CanTouch as needed for hit detection.
+
+## VFX
+
+- Beam colors and widths.
+- ParticleEmitters using simple built-in textures or no texture initially.
+- BillboardGui text labels/icons using simple text characters:
+  - Static: `~`
+  - Drift: `≈`
+  - Dissonance: `≋`
+  - Overload: `!`
+  - Marked: `◆`
+  - Focused: `◎`
+
+## UI
+
+Use basic Frames, TextLabels, TextButtons, UIStroke, and UIGradient.
+
+---
+
+# Acceptance Criteria for First Codex Build
+
+The first build is successful if:
+
+1. Player can enter or view the tuner station.
+2. Four threads are visible.
+3. Hovering a thread visually focuses it.
+4. Clicking a thread visually marks/unmarks it.
+5. Threads randomly develop one of four problems.
+6. Each problem has a distinct visual cue.
+7. Q/W/E/R apply the correct four actions.
+8. Correct actions clear the matching problem.
+9. Wrong actions reduce stability.
+10. Memory progress increases on success.
+11. Stability and memory progress display in HUD.
+12. The code has separate modules for config, selection, thread state, and action resolution.
+
+---
+
+# First Codex Prompt
+
+Use this prompt for the next implementation pass:
+
+```text
+Create a Roblox Studio prototype for the Veil Memory Tuner minigame.
+
+Build a TunerPrototype scene with a tuner console, a central memory core, and four memory threads. Use Beam objects between Attachments for the threads, with simple placeholder Parts for anchors and the core. Each thread should have a larger invisible NodePart for hover/click targeting, plus a BillboardGui label.
+
+Implement a modular Lua structure:
+- ReplicatedStorage/VeilTuner/TunerConfig.lua
+- ReplicatedStorage/VeilTuner/SelectionState.lua
+- ReplicatedStorage/VeilTuner/ThreadState.lua
+- ReplicatedStorage/VeilTuner/ActionResolver.lua
+- StarterPlayerScripts/VeilTunerClient.client.lua
+
+Gameplay:
+- Threads can be Stable, Static, Drift, Dissonance, or Overload.
+- Correct actions are Static -> Cleanse, Drift -> Anchor, Dissonance -> Harmonize, Overload -> Vent.
+- Mouse hover temporarily focuses a thread.
+- Mouse click toggles a thread as marked.
+- Effective targets are focused + marked threads.
+- Q applies Cleanse, W applies Anchor, E applies Harmonize, R applies Vent.
+- Correct action clears the problem, increases memory progress, and plays a success visual pulse.
+- Wrong action reduces stability and plays an error visual pulse.
+- Randomly spawn problems every few seconds, with only one simultaneous problem at first.
+- If a problem expires, reduce stability and clear it.
+
+HUD:
+- Show Stability percentage.
+- Show Memory Progress percentage.
+- Show four action prompts: Q Cleanse, W Anchor, E Harmonize, R Vent.
+- Show currently focused thread and problem.
+
+Visuals:
+- Stable threads are calm blue/gold.
+- Static threads flicker white/purple with particles.
+- Drift threads glow cyan and offset slightly from alignment.
+- Dissonance threads pulse purple/green.
+- Overload threads glow red and spark.
+- Focused threads show a reticle.
+- Marked threads show a persistent diamond glyph.
+
+Use placeholder assets only. Prioritize readable gameplay and modular code. Do not build final art yet.
+```
+
+---
+
+# After First Build: Asset Production Checklist
+
+Once the first playable prototype works, create or source these final-ish assets:
+
+## Models
+
+- Tuner console
+- Thread anchor pylon
+- Central memory core/crystal
+- Skiff-compatible tuner station shell
+- Selection glyph/rune mesh or image
+- Optional chamber wall/floor kit
+
+## Images / UI
+
+- Cleanse icon
+- Anchor icon
+- Harmonize icon
+- Vent icon
+- Static icon
+- Drift icon
+- Dissonance icon
+- Overload icon
+- Focus reticle
+- Marked glyph
+- Warning glyph
+- Stability icon
+- Memory progress icon
+- Ornate panel borders
+- Action button backgrounds
+
+## VFX Textures
+
+- Soft glow circle
+- Spark particle
+- Smoke/wisp particle
+- Rune particle
+- Static/noise particle
+- Overload shard particle
+- Ripple ring
+- Waveform strip
+
+## Sounds
+
+- Ambient thread hum
+- Focus hover
+- Mark/unmark
+- Cleanse action
+- Anchor action
+- Harmonize action
+- Vent action
+- Correct action success
+- Wrong action error
+- Overload warning
+- Backlash burst
+- Memory restored
+
+---
+
+# Practical Visual Target
+
+The concept art is the long-term mood target. The first Roblox target is much simpler:
+
+> A player should be able to glance at the tuner and immediately know which thread is affected, what problem it has, what action fixes it, and which threads will receive the next action.
+
+That readability matters more than ornate detail in the first build.
+
