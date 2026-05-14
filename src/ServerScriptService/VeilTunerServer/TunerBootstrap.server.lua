@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
 
 local TunerConfig = require(ReplicatedStorage:WaitForChild("VeilTuner"):WaitForChild("TunerConfig"))
 
@@ -29,6 +30,17 @@ local function createAttachment(parent, name, position)
     return attachment
 end
 
+local function createPointLight(parent, color, brightness, range)
+    local light = Instance.new("PointLight")
+    light.Color = color
+    light.Brightness = brightness
+    light.Range = range
+    light.Shadows = false
+    light.Parent = parent
+
+    return light
+end
+
 local function createLabel(parent, name, size, position, text, textSize, color)
     local label = Instance.new("TextLabel")
     label.Name = name
@@ -53,6 +65,10 @@ if existingPrototype then
 end
 
 Workspace.Terrain.WaterColor = TunerConfig.Visuals.worldBackground
+Lighting.Ambient = Color3.fromRGB(18, 22, 34)
+Lighting.OutdoorAmbient = Color3.fromRGB(8, 12, 22)
+Lighting.Brightness = 1.6
+Lighting.ClockTime = 0
 
 local prototype = Instance.new("Model")
 prototype.Name = prototypeName
@@ -98,6 +114,7 @@ local coreGlow = createPart(
 coreGlow.Shape = Enum.PartType.Ball
 coreGlow.Transparency = 0.55
 coreGlow.CanCollide = false
+createPointLight(memoryCore, TunerConfig.Visuals.stableAccentColor, 2.6, 26)
 
 local threadsFolder = Instance.new("Folder")
 threadsFolder.Name = "Threads"
@@ -150,6 +167,7 @@ for index = 1, TunerConfig.Challenge.threadCount do
     nodeOrb.Shape = Enum.PartType.Ball
     nodeOrb.CanCollide = false
     nodeOrb:SetAttribute("ThreadId", threadId)
+    createPointLight(nodeOrb, TunerConfig.Visuals.stableColor, 1.2, 12)
 
     local nodePart = createPart(
         threadModel,
@@ -244,8 +262,13 @@ for index = 1, TunerConfig.Challenge.threadCount do
     problemEmitter.LightEmission = 1
     problemEmitter.Lifetime = NumberRange.new(0.25, 0.45)
     problemEmitter.Rate = 0
-    problemEmitter.Speed = NumberRange.new(0.3, 0.8)
-    problemEmitter.SpreadAngle = Vector2.new(30, 30)
+    problemEmitter.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.08),
+        NumberSequenceKeypoint.new(0.5, 0.22),
+        NumberSequenceKeypoint.new(1, 0),
+    })
+    problemEmitter.Speed = NumberRange.new(0.8, 1.8)
+    problemEmitter.SpreadAngle = Vector2.new(70, 70)
     problemEmitter.Parent = nodeOrb
 end
 

@@ -23,6 +23,7 @@ local challengeState = {
     stability = TunerConfig.Challenge.startingStability,
     memoryProgress = 0,
     statusMessage = "Tune the unstable threads.",
+    statusTone = "Neutral",
 }
 
 local worldTweens = {}
@@ -30,6 +31,12 @@ local threadViews = {}
 local hud = nil
 local spawnClock = 0
 local runtimeClock = 0
+local feedbackState = {
+    tone = "Neutral",
+    text = "",
+    endsAt = 0,
+    actionId = nil,
+}
 
 local function clampChallengeState()
     challengeState.stability = math.clamp(challengeState.stability, 0, 100)
@@ -56,49 +63,156 @@ local function createText(parent, name, size, position, text, font, textSize, co
     return label
 end
 
+local function createStroke(parent, color, thickness, transparency)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color
+    stroke.Thickness = thickness
+    stroke.Transparency = transparency
+    stroke.Parent = parent
+
+    return stroke
+end
+
+local function createCorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius)
+    corner.Parent = parent
+
+    return corner
+end
+
+local function createMeter(parent, name, position, color)
+    local group = Instance.new("Frame")
+    group.Name = name
+    group.Size = UDim2.new(1, -32, 0, 48)
+    group.Position = position
+    group.BackgroundTransparency = 1
+    group.Parent = parent
+
+    local label = createText(
+        group,
+        "Label",
+        UDim2.new(1, -70, 0, 18),
+        UDim2.fromOffset(0, 0),
+        "",
+        Enum.Font.GothamMedium,
+        13,
+        TunerConfig.Visuals.mutedTextColor
+    )
+
+    local valueLabel = createText(
+        group,
+        "Value",
+        UDim2.fromOffset(64, 18),
+        UDim2.new(1, -64, 0, 0),
+        "",
+        Enum.Font.GothamBold,
+        14,
+        color
+    )
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+    local track = Instance.new("Frame")
+    track.Name = "Track"
+    track.Size = UDim2.new(1, 0, 0, 16)
+    track.Position = UDim2.fromOffset(0, 24)
+    track.BackgroundColor3 = Color3.fromRGB(9, 18, 30)
+    track.BorderSizePixel = 0
+    track.Parent = group
+    createCorner(track, 4)
+    createStroke(track, TunerConfig.Visuals.panelAccentDim, 1, 0.15)
+
+    local fill = Instance.new("Frame")
+    fill.Name = "Fill"
+    fill.Size = UDim2.fromScale(1, 1)
+    fill.BackgroundColor3 = color
+    fill.BorderSizePixel = 0
+    fill.Parent = track
+    createCorner(fill, 4)
+
+    local fillGradient = Instance.new("UIGradient")
+    fillGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, color:Lerp(Color3.new(1, 1, 1), 0.15)),
+        ColorSequenceKeypoint.new(1, color),
+    })
+    fillGradient.Parent = fill
+
+    return {
+        group = group,
+        label = label,
+        valueLabel = valueLabel,
+        fill = fill,
+    }
+end
+
 local function createActionChip(parent, actionId, actionConfig, order)
     local chip = Instance.new("Frame")
     chip.Name = actionId
-    chip.Size = UDim2.new(0.235, 0, 0, 56)
+    chip.Size = UDim2.new(0.235, 0, 1, 0)
     chip.Position = UDim2.new((order - 1) * 0.255, 0, 0, 0)
-    chip.BackgroundColor3 = Color3.fromRGB(18, 24, 36)
+    chip.BackgroundColor3 = Color3.fromRGB(10, 18, 30)
     chip.BorderSizePixel = 0
     chip.Parent = parent
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
-    corner.Parent = chip
+    createCorner(chip, 6)
 
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = actionConfig.color
-    stroke.Thickness = 1.5
-    stroke.Transparency = 0.2
-    stroke.Parent = chip
+    local stroke = createStroke(chip, actionConfig.color, 1.5, 0.15)
+
+    local glyph = createText(
+        chip,
+        "GlyphLabel",
+        UDim2.fromOffset(30, 30),
+        UDim2.fromOffset(8, 7),
+        actionConfig.glyph,
+        Enum.Font.GothamBold,
+        20,
+        actionConfig.color
+    )
+    glyph.TextXAlignment = Enum.TextXAlignment.Center
 
     createText(
         chip,
         "KeyLabel",
-        UDim2.fromOffset(42, 26),
-        UDim2.fromOffset(10, 7),
+        UDim2.fromOffset(30, 18),
+        UDim2.new(1, -38, 0, 8),
         actionConfig.keyCode.Name,
         Enum.Font.GothamBold,
-        18,
-        actionConfig.color
+        13,
+        TunerConfig.Visuals.textColor
     )
 
     local nameLabel = createText(
         chip,
         "NameLabel",
-        UDim2.new(1, -20, 0, 20),
-        UDim2.fromOffset(10, 29),
-        actionConfig.displayName,
-        Enum.Font.Gotham,
-        14,
-        Color3.fromRGB(235, 240, 255)
+        UDim2.new(1, -16, 0, 18),
+        UDim2.fromOffset(8, 35),
+        actionConfig.shortName,
+        Enum.Font.GothamBold,
+        12,
+        TunerConfig.Visuals.textColor
     )
     nameLabel.TextWrapped = true
 
-    return chip
+    local taglineLabel = createText(
+        chip,
+        "TaglineLabel",
+        UDim2.new(1, -16, 0, 16),
+        UDim2.fromOffset(8, 52),
+        actionConfig.tagline,
+        Enum.Font.Gotham,
+        11,
+        TunerConfig.Visuals.mutedTextColor
+    )
+    taglineLabel.TextWrapped = true
+
+    return {
+        frame = chip,
+        stroke = stroke,
+        glyph = glyph,
+        keyLabel = chip.KeyLabel,
+        nameLabel = nameLabel,
+        taglineLabel = taglineLabel,
+    }
 end
 
 local function createHud()
@@ -116,27 +230,20 @@ local function createHud()
 
     local panel = Instance.new("Frame")
     panel.Name = "Panel"
-    panel.Size = UDim2.fromOffset(380, 218)
+    panel.Size = UDim2.fromOffset(470, 318)
     panel.Position = UDim2.fromOffset(28, 28)
     panel.BackgroundColor3 = TunerConfig.Visuals.panelBackground
     panel.BackgroundTransparency = 0.12
     panel.BorderSizePixel = 0
     panel.Parent = screenGui
 
-    local panelCorner = Instance.new("UICorner")
-    panelCorner.CornerRadius = UDim.new(0, 18)
-    panelCorner.Parent = panel
-
-    local panelStroke = Instance.new("UIStroke")
-    panelStroke.Color = TunerConfig.Visuals.panelAccent
-    panelStroke.Thickness = 1.4
-    panelStroke.Transparency = 0.15
-    panelStroke.Parent = panel
+    createCorner(panel, 8)
+    createStroke(panel, TunerConfig.Visuals.panelAccent, 1.6, 0.05)
 
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 18, 30)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 30, 42)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 10, 18)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(13, 22, 34)),
     })
     gradient.Rotation = 90
     gradient.Parent = panel
@@ -144,63 +251,71 @@ local function createHud()
     createText(
         panel,
         "TitleLabel",
-        UDim2.new(1, -32, 0, 28),
+        UDim2.new(1, -32, 0, 30),
         UDim2.fromOffset(16, 14),
         "VEIL MEMORY TUNER",
         Enum.Font.GothamBold,
         20,
-        Color3.fromRGB(245, 235, 190)
+        TunerConfig.Visuals.textColor
     )
 
-    local stabilityLabel = createText(
+    local subtitleLabel = createText(
         panel,
-        "StabilityLabel",
-        UDim2.new(0.48, -16, 0, 26),
-        UDim2.fromOffset(16, 52),
-        "",
-        Enum.Font.GothamMedium,
-        15,
-        Color3.fromRGB(191, 232, 255)
+        "SubtitleLabel",
+        UDim2.new(1, -32, 0, 18),
+        UDim2.fromOffset(16, 40),
+        "Tune the veil. Restore the memory.",
+        Enum.Font.Gotham,
+        12,
+        TunerConfig.Visuals.mutedTextColor
     )
+    subtitleLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-    local memoryLabel = createText(
-        panel,
-        "MemoryLabel",
-        UDim2.new(0.48, -16, 0, 26),
-        UDim2.fromOffset(196, 52),
-        "",
-        Enum.Font.GothamMedium,
-        15,
-        Color3.fromRGB(245, 225, 170)
-    )
+    local stabilityMeter = createMeter(panel, "StabilityMeter", UDim2.fromOffset(16, 66), TunerConfig.Visuals.stableColor)
+    stabilityMeter.label.Text = "STABILITY"
+
+    local memoryMeter = createMeter(panel, "MemoryMeter", UDim2.fromOffset(16, 116), TunerConfig.Visuals.memoryColor)
+    memoryMeter.label.Text = "MEMORY PROGRESS"
 
     local focusLabel = createText(
         panel,
         "FocusLabel",
         UDim2.new(1, -32, 0, 24),
-        UDim2.fromOffset(16, 84),
-        "",
-        Enum.Font.Gotham,
-        14,
-        Color3.fromRGB(226, 233, 255)
-    )
-
-    local messageLabel = createText(
-        panel,
-        "MessageLabel",
-        UDim2.new(1, -32, 0, 38),
-        UDim2.fromOffset(16, 108),
+        UDim2.fromOffset(16, 166),
         "",
         Enum.Font.GothamMedium,
+        14,
+        TunerConfig.Visuals.textColor
+    )
+
+    local banner = Instance.new("Frame")
+    banner.Name = "FeedbackBanner"
+    banner.Size = UDim2.new(1, -32, 0, 46)
+    banner.Position = UDim2.fromOffset(16, 194)
+    banner.BackgroundColor3 = Color3.fromRGB(12, 20, 31)
+    banner.BackgroundTransparency = 0.08
+    banner.BorderSizePixel = 0
+    banner.Parent = panel
+    createCorner(banner, 5)
+    local bannerStroke = createStroke(banner, TunerConfig.Visuals.panelAccentDim, 1.4, 0.08)
+
+    local messageLabel = createText(
+        banner,
+        "MessageLabel",
+        UDim2.new(1, -24, 1, 0),
+        UDim2.fromOffset(12, 0),
+        "",
+        Enum.Font.GothamBold,
         15,
-        Color3.fromRGB(250, 250, 255)
+        TunerConfig.Visuals.textColor
     )
     messageLabel.TextWrapped = true
+    messageLabel.TextYAlignment = Enum.TextYAlignment.Center
 
     local actionsRow = Instance.new("Frame")
     actionsRow.Name = "ActionsRow"
-    actionsRow.Size = UDim2.new(1, -32, 0, 56)
-    actionsRow.Position = UDim2.fromOffset(16, 154)
+    actionsRow.Size = UDim2.new(1, -32, 0, 68)
+    actionsRow.Position = UDim2.fromOffset(16, 250)
     actionsRow.BackgroundTransparency = 1
     actionsRow.Parent = panel
 
@@ -212,10 +327,12 @@ local function createHud()
 
     return {
         screenGui = screenGui,
-        stabilityLabel = stabilityLabel,
-        memoryLabel = memoryLabel,
+        stabilityMeter = stabilityMeter,
+        memoryMeter = memoryMeter,
         focusLabel = focusLabel,
         messageLabel = messageLabel,
+        banner = banner,
+        bannerStroke = bannerStroke,
         actionChips = actionChips,
     }
 end
@@ -232,6 +349,7 @@ local function collectThreadViews()
                 model = threadModel,
                 anchorPart = threadModel:WaitForChild("AnchorPart"),
                 nodeOrb = threadModel:WaitForChild("NodeOrb"),
+                nodeOrbBaseSize = threadModel:WaitForChild("NodeOrb").Size,
                 nodePart = threadModel:WaitForChild("NodePart"),
                 beam = threadModel:WaitForChild("ThreadBeam"),
                 auraBeam = threadModel:WaitForChild("AuraBeam"),
@@ -257,29 +375,103 @@ local function tweenWorldPart(part, properties, duration)
     tween:Play()
 end
 
+local function pulseThreadView(threadId, tone)
+    local view = threadViews[threadId]
+
+    if not view then
+        return
+    end
+
+    local scale = tone == "Success" and 1.75 or 1.45
+    local pulseSize = view.nodeOrbBaseSize * scale
+
+    tweenWorldPart(view.nodeOrb, { Size = pulseSize }, 0.08)
+
+    task.delay(0.09, function()
+        if view.nodeOrb then
+            tweenWorldPart(view.nodeOrb, { Size = view.nodeOrbBaseSize }, 0.22)
+        end
+    end)
+end
+
+local function getToneColor(tone)
+    if tone == "Success" then
+        return TunerConfig.Visuals.successColor
+    elseif tone == "Error" then
+        return TunerConfig.Visuals.errorColor
+    elseif tone == "Warning" then
+        return TunerConfig.Visuals.warningColor
+    end
+
+    return TunerConfig.Visuals.panelAccent
+end
+
+local function setMeterValue(meter, value, maxValue)
+    local percent = math.clamp(value / maxValue, 0, 1)
+
+    meter.fill.Size = UDim2.fromScale(percent, 1)
+    meter.valueLabel.Text = string.format("%d%%", math.floor(percent * 100 + 0.5))
+end
+
+local function pulseHud(tone, text, actionId)
+    feedbackState.tone = tone
+    feedbackState.text = text
+    feedbackState.actionId = actionId
+    feedbackState.endsAt = runtimeClock + TunerConfig.Visuals.feedbackDuration
+
+    local toneColor = getToneColor(tone)
+    hud.banner.BackgroundColor3 = tone == "Error" and Color3.fromRGB(42, 13, 12) or Color3.fromRGB(10, 22, 30)
+    hud.bannerStroke.Color = toneColor
+    hud.bannerStroke.Thickness = tone == "Neutral" and 1.4 or 2.4
+    hud.messageLabel.TextColor3 = toneColor
+
+    if actionId and hud.actionChips[actionId] then
+        local chip = hud.actionChips[actionId]
+        chip.stroke.Thickness = 3
+        chip.frame.BackgroundColor3 = tone == "Error" and Color3.fromRGB(42, 13, 12) or Color3.fromRGB(16, 38, 34)
+    end
+end
+
+local function updateHudFeedback(now)
+    local active = now < feedbackState.endsAt
+    local toneColor = active and getToneColor(feedbackState.tone) or TunerConfig.Visuals.panelAccentDim
+
+    hud.messageLabel.Text = active and feedbackState.text or challengeState.statusMessage
+    hud.messageLabel.TextColor3 = active and toneColor or TunerConfig.Visuals.textColor
+    hud.bannerStroke.Color = toneColor
+    hud.bannerStroke.Thickness = active and 2.4 or 1.4
+    hud.banner.BackgroundColor3 = active and Color3.fromRGB(12, 25, 32) or Color3.fromRGB(12, 20, 31)
+
+    for actionId, chip in pairs(hud.actionChips) do
+        local actionColor = TunerConfig.Actions[actionId].color
+        local isActiveAction = active and feedbackState.actionId == actionId
+
+        chip.stroke.Color = isActiveAction and toneColor or actionColor
+        chip.stroke.Thickness = isActiveAction and 3 or 1.5
+        chip.frame.BackgroundColor3 = isActiveAction and Color3.fromRGB(20, 34, 34) or Color3.fromRGB(10, 18, 30)
+    end
+end
+
 local function updateHud()
     local focusedIds = selectionState:GetFocusedThreadIds()
     local markedIds = selectionState:GetMarkedThreadIds()
     local focusedThreadId = focusedIds[1]
     local focusedProblem = focusedThreadId and threadStates[focusedThreadId].problemId or nil
 
-    hud.stabilityLabel.Text = string.format("Stability  %d%%", math.floor(challengeState.stability + 0.5))
-    hud.memoryLabel.Text = string.format(
-        "Memory  %d%%",
-        math.floor((challengeState.memoryProgress / TunerConfig.Challenge.targetMemoryProgress) * 100 + 0.5)
-    )
+    setMeterValue(hud.stabilityMeter, challengeState.stability, 100)
+    setMeterValue(hud.memoryMeter, challengeState.memoryProgress, TunerConfig.Challenge.targetMemoryProgress)
 
     if focusedThreadId then
         hud.focusLabel.Text = string.format(
-            "Focus: %s%s",
+            "FOCUS  %s%s",
             focusedThreadId,
-            focusedProblem and string.format("  |  Problem: %s", focusedProblem) or "  |  Problem: Stable"
+            focusedProblem and string.format("  /  %s", focusedProblem) or "  /  STABLE"
         )
     else
-        hud.focusLabel.Text = string.format("Focus: none  |  Marked: %d", #markedIds)
+        hud.focusLabel.Text = string.format("FOCUS  NONE  /  MARKED %d", #markedIds)
     end
 
-    hud.messageLabel.Text = challengeState.statusMessage
+    updateHudFeedback(runtimeClock)
 end
 
 local function colorSequence(fromColor, toColor)
@@ -403,8 +595,14 @@ local function updateAllVisuals(now)
     updateHud()
 end
 
-local function setStatusMessage(message)
+local function setStatusMessage(message, tone, actionId)
     challengeState.statusMessage = message
+    challengeState.statusTone = tone or "Neutral"
+
+    if tone and tone ~= "Neutral" then
+        pulseHud(tone, message, actionId)
+    end
+
     updateHud()
 end
 
@@ -424,7 +622,7 @@ local function spawnProblem(now)
     local state = threadStates[threadId]
 
     ThreadState.SetProblem(state, problemId, now, TunerConfig)
-    setStatusMessage(string.format("%s destabilized with %s.", threadId, problemId))
+    setStatusMessage(string.format("WARNING  %s destabilized: %s.", threadId, problemId), "Warning")
 end
 
 local function expireProblems(now)
@@ -439,8 +637,12 @@ local function expireProblems(now)
         challengeState.stability -= TunerConfig.Challenge.expiredProblemPenalty
         state.integrity = math.max(0, state.integrity - TunerConfig.Challenge.expiredProblemPenalty)
         threadViews[threadId].problemEmitter:Emit(8)
+        pulseThreadView(threadId, "Error")
 
-        setStatusMessage(string.format("%s slipped past calibration on %s.", expiredProblem or "A problem", threadId))
+        setStatusMessage(
+            string.format("FAILURE  %s slipped past calibration on %s.", expiredProblem or "A problem", threadId),
+            "Error"
+        )
     end
 
     clampChallengeState()
@@ -452,7 +654,7 @@ local function resolveAction(actionId, now)
     if #targetIds == 0 then
         challengeState.stability -= TunerConfig.Challenge.emptyTargetPenalty
         clampChallengeState()
-        setStatusMessage(string.format("%s had no target lock.", actionId))
+        setStatusMessage(string.format("NO TARGET  %s had no thread lock.", actionId), "Error", actionId)
         return
     end
 
@@ -478,21 +680,23 @@ local function resolveAction(actionId, now)
             ThreadState.ClearProblem(state)
             ThreadState.SetPulse(state, "Success", now, TunerConfig.Challenge.pulseDuration)
             threadViews[threadId].problemEmitter:Emit(10)
+            pulseThreadView(threadId, "Success")
             successCount += 1
         else
             ThreadState.SetPulse(state, "Error", now, TunerConfig.Challenge.pulseDuration)
             state.integrity = math.max(0, state.integrity - math.ceil(TunerConfig.Challenge.wrongStabilityPenalty / 2))
             threadViews[threadId].problemEmitter:Emit(6)
+            pulseThreadView(threadId, "Error")
             failureCount += 1
         end
     end
 
     if successCount > 0 and failureCount == 0 then
-        setStatusMessage(string.format("%s synchronized cleanly.", actionId))
+        setStatusMessage(string.format("SYNC COMPLETE  %s stabilized the thread.", actionId), "Success", actionId)
     elseif successCount > 0 then
-        setStatusMessage(string.format("%s helped some threads, but backlash spread.", actionId))
+        setStatusMessage(string.format("PARTIAL SYNC  %s helped, but backlash spread.", actionId), "Warning", actionId)
     else
-        setStatusMessage(string.format("%s misfired. Stability dropped.", actionId))
+        setStatusMessage(string.format("MISFIRE  %s destabilized the target.", actionId), "Error", actionId)
     end
 end
 
