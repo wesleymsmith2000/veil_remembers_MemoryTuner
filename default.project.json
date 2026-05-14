@@ -1,0 +1,24 @@
+{
+  "name": "MemoryTunerGame",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "VeilTuner": {
+        "$path": "src/ReplicatedStorage/VeilTuner"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "VeilTunerServer": {
+        "$path": "src/ServerScriptService/VeilTunerServer"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      }
+    }
+  }
+}
