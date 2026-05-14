@@ -1,5 +1,51 @@
 local TunerConfig = {}
 
+TunerConfig.SpriteSheets = {
+    CoreActionIcons = "rbxassetid://126042074039272",
+    StatusAndTargetingIcons = "rbxassetid://134906789981907",
+    UIKit = "rbxassetid://131908294208637",
+}
+
+TunerConfig.ActionIconRects = {
+    Cleanse = { offset = Vector2.new(163, 559), size = Vector2.new(121, 127) },
+    Anchor = { offset = Vector2.new(353, 559), size = Vector2.new(122, 127) },
+    Harmonize = { offset = Vector2.new(548, 538), size = Vector2.new(122, 148) },
+    Vent = { offset = Vector2.new(739, 559), size = Vector2.new(122, 127) },
+}
+
+TunerConfig.StatusIconRects = {
+    Static = { offset = Vector2.new(106, 283), size = Vector2.new(112, 116) },
+    Drift = { offset = Vector2.new(336, 283), size = Vector2.new(120, 116) },
+    Dissonance = { offset = Vector2.new(573, 283), size = Vector2.new(120, 116) },
+    Overload = { offset = Vector2.new(805, 283), size = Vector2.new(120, 104) },
+    Stable = { offset = Vector2.new(106, 580), size = Vector2.new(104, 112) },
+    Focused = { offset = Vector2.new(339, 580), size = Vector2.new(113, 113) },
+    Marked = { offset = Vector2.new(574, 580), size = Vector2.new(106, 113) },
+    Warning = { offset = Vector2.new(805, 580), size = Vector2.new(118, 112) },
+}
+
+TunerConfig.StatusFeedbackIconRects = {
+    Static = { offset = Vector2.new(78, 129), size = Vector2.new(167, 148) },
+    Drift = { offset = Vector2.new(307, 129), size = Vector2.new(167, 148) },
+    Dissonance = { offset = Vector2.new(544, 129), size = Vector2.new(167, 148) },
+    Overload = { offset = Vector2.new(776, 129), size = Vector2.new(167, 148) },
+    Stable = { offset = Vector2.new(78, 426), size = Vector2.new(167, 148) },
+    Focused = { offset = Vector2.new(307, 426), size = Vector2.new(167, 148) },
+    Marked = { offset = Vector2.new(544, 426), size = Vector2.new(167, 148) },
+    Warning = { offset = Vector2.new(776, 426), size = Vector2.new(167, 148) },
+}
+
+TunerConfig.StatusFeedbackLabelRects = {
+    Static = { offset = Vector2.new(89, 274), size = Vector2.new(145, 44) },
+    Drift = { offset = Vector2.new(319, 274), size = Vector2.new(145, 44) },
+    Dissonance = { offset = Vector2.new(555, 274), size = Vector2.new(145, 44) },
+    Overload = { offset = Vector2.new(788, 274), size = Vector2.new(145, 44) },
+    Stable = { offset = Vector2.new(89, 571), size = Vector2.new(145, 44) },
+    Focused = { offset = Vector2.new(319, 571), size = Vector2.new(145, 44) },
+    Marked = { offset = Vector2.new(555, 571), size = Vector2.new(145, 44) },
+    Warning = { offset = Vector2.new(788, 571), size = Vector2.new(145, 44) },
+}
+
 TunerConfig.Actions = {
     Cleanse = {
         id = "Cleanse",
@@ -7,6 +53,7 @@ TunerConfig.Actions = {
         shortName = "CLEANSE",
         glyph = "+",
         tagline = "Purify",
+        iconRect = TunerConfig.ActionIconRects.Cleanse,
         keyCode = Enum.KeyCode.Q,
         color = Color3.fromRGB(255, 214, 120),
     },
@@ -16,6 +63,7 @@ TunerConfig.Actions = {
         shortName = "ANCHOR",
         glyph = "A",
         tagline = "Secure",
+        iconRect = TunerConfig.ActionIconRects.Anchor,
         keyCode = Enum.KeyCode.W,
         color = Color3.fromRGB(95, 225, 255),
     },
@@ -25,6 +73,7 @@ TunerConfig.Actions = {
         shortName = "HARMONIZE",
         glyph = "H",
         tagline = "Balance",
+        iconRect = TunerConfig.ActionIconRects.Harmonize,
         keyCode = Enum.KeyCode.E,
         color = Color3.fromRGB(190, 116, 255),
     },
@@ -34,6 +83,7 @@ TunerConfig.Actions = {
         shortName = "VENT",
         glyph = "V",
         tagline = "Release",
+        iconRect = TunerConfig.ActionIconRects.Vent,
         keyCode = Enum.KeyCode.R,
         color = Color3.fromRGB(255, 90, 100),
     },
@@ -54,6 +104,7 @@ TunerConfig.Problems = {
         color = Color3.fromRGB(220, 220, 255),
         duration = 7,
         glyph = "~",
+        iconKey = "Static",
     },
     Drift = {
         id = "Drift",
@@ -62,6 +113,7 @@ TunerConfig.Problems = {
         color = Color3.fromRGB(90, 200, 255),
         duration = 7,
         glyph = "=",
+        iconKey = "Drift",
     },
     Dissonance = {
         id = "Dissonance",
@@ -70,6 +122,7 @@ TunerConfig.Problems = {
         color = Color3.fromRGB(190, 100, 255),
         duration = 7,
         glyph = "*",
+        iconKey = "Dissonance",
     },
     Overload = {
         id = "Overload",
@@ -78,6 +131,7 @@ TunerConfig.Problems = {
         color = Color3.fromRGB(255, 70, 90),
         duration = 6,
         glyph = "!",
+        iconKey = "Overload",
     },
 }
 
