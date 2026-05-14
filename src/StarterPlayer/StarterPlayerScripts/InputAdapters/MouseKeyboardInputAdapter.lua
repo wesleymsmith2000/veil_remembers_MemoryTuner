@@ -50,6 +50,11 @@ function MouseKeyboardInputAdapter:_setHoveredThread(threadId)
 end
 
 function MouseKeyboardInputAdapter:_updateHoverTarget()
+    if self.callbacks.isInputEnabled and not self.callbacks.isInputEnabled() then
+        self:_setHoveredThread(nil)
+        return
+    end
+
     local target = self.mouse.Target
     local threadId = nil
 
@@ -66,6 +71,10 @@ end
 
 function MouseKeyboardInputAdapter:_handleInputBegan(inputObject, gameProcessedEvent)
     if gameProcessedEvent then
+        return
+    end
+
+    if self.callbacks.isInputEnabled and not self.callbacks.isInputEnabled() then
         return
     end
 

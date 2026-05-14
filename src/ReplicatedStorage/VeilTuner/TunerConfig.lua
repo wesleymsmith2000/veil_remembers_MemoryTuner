@@ -6,6 +6,15 @@ TunerConfig.SpriteSheets = {
     UIKit = "rbxassetid://131908294208637",
 }
 
+TunerConfig.Meshes = {
+    TunerConsole = "rbxassetid://96705016231538",
+    FloorRing = "rbxassetid://73082801110693",
+    MemoryCoreCrystal = "rbxassetid://114893807183164",
+    ThreadAnchorPylon = "rbxassetid://113996561845526",
+    FocusReticle = "rbxassetid://95443014296854",
+    MarkedSelectionGlyph = "rbxassetid://135002496816935",
+}
+
 TunerConfig.ActionIconRects = {
     Cleanse = { offset = Vector2.new(163, 559), size = Vector2.new(121, 127) },
     Anchor = { offset = Vector2.new(353, 559), size = Vector2.new(122, 127) },
@@ -195,9 +204,10 @@ TunerConfig.Visuals = {
 
 TunerConfig.World = {
     origin = CFrame.new(0, 6, 0),
-    threadRadius = 18,
+    threadRadius = 27,
+    threadAngleOffset = math.rad(45),
     nodeHeight = 7,
-    consoleSize = Vector3.new(30, 2, 30),
+    consoleSize = Vector3.new(84, 2, 84),
 }
 
 return TunerConfig

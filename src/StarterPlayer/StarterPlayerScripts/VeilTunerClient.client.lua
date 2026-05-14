@@ -1,10 +1,12 @@
 local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
 
 local sharedRoot = ReplicatedStorage:WaitForChild("VeilTuner")
 local TunerConfig = require(sharedRoot:WaitForChild("TunerConfig"))
@@ -31,6 +33,18 @@ local threadViews = {}
 local hud = nil
 local spawnClock = 0
 local runtimeClock = 0
+local operatorState = {
+    active = false,
+    prompt = nil,
+    lockCFrame = nil,
+    previousWalkSpeed = nil,
+    previousJumpPower = nil,
+    previousJumpHeight = nil,
+    previousAutoRotate = nil,
+    previousCameraType = nil,
+    previousCameraSubject = nil,
+    controls = nil,
+}
 local feedbackState = {
     tone = "Neutral",
     text = "",
@@ -47,6 +61,113 @@ local function clampChallengeState()
         0,
         TunerConfig.Challenge.targetMemoryProgress
     )
+end
+
+local addEventLogMessage
+local resetGameSession
+local checkSessionEnd
+local updateAllVisuals
+
+local function getCharacterRig()
+    local character = localPlayer.Character
+
+    if not character then
+        return nil, nil, nil
+    end
+
+    return character, character:FindFirstChildOfClass("Humanoid"), character:FindFirstChild("HumanoidRootPart")
+end
+
+local function getPlayerControls()
+    if operatorState.controls then
+        return operatorState.controls
+    end
+
+    local playerScripts = localPlayer:WaitForChild("PlayerScripts")
+    local playerModule = playerScripts:WaitForChild("PlayerModule")
+    local controls = require(playerModule):GetControls()
+    operatorState.controls = controls
+
+    return controls
+end
+
+local function aimOperatorCamera()
+    camera = workspace.CurrentCamera
+
+    local lockPoint = prototype:WaitForChild("OperatorStation"):WaitForChild("OperatorLockPoint")
+    local crystal = prototype:WaitForChild("MemoryCore")
+    local cameraPosition = lockPoint.Position + Vector3.new(0, 2.2, 5.8)
+    local lookAtPosition = crystal.Position + Vector3.new(0, 0.6, 0)
+
+    camera.CameraType = Enum.CameraType.Custom
+    camera.CameraSubject = select(2, getCharacterRig())
+    camera.CFrame = CFrame.lookAt(cameraPosition, lookAtPosition)
+end
+
+local function setOperatorMode(enabled, prompt, resetOnRelease)
+    if enabled == operatorState.active then
+        return
+    end
+
+    local character, humanoid, rootPart = getCharacterRig()
+
+    if not humanoid or not rootPart then
+        return
+    end
+
+    operatorState.active = enabled
+    operatorState.prompt = prompt or operatorState.prompt
+
+    if enabled then
+        if hud then
+            hud.screenGui.Enabled = true
+        end
+
+        if resetGameSession then
+            resetGameSession("Tuner session started.")
+        end
+
+        local lockPoint = prototype:WaitForChild("OperatorStation"):WaitForChild("OperatorLockPoint")
+        operatorState.lockCFrame = lockPoint.CFrame
+        operatorState.previousWalkSpeed = humanoid.WalkSpeed
+        operatorState.previousJumpPower = humanoid.JumpPower
+        operatorState.previousJumpHeight = humanoid.JumpHeight
+        operatorState.previousAutoRotate = humanoid.AutoRotate
+
+        getPlayerControls():Disable()
+        humanoid.WalkSpeed = 0
+        humanoid.JumpPower = 0
+        humanoid.JumpHeight = 0
+        humanoid.AutoRotate = false
+        character:PivotTo(operatorState.lockCFrame)
+        aimOperatorCamera()
+
+        if operatorState.prompt then
+            operatorState.prompt.ActionText = "Step Away"
+        end
+
+        addEventLogMessage("Operator station locked. Movement disabled.")
+    else
+        getPlayerControls():Enable()
+        humanoid.WalkSpeed = operatorState.previousWalkSpeed or 16
+        humanoid.JumpPower = operatorState.previousJumpPower or 50
+        humanoid.JumpHeight = operatorState.previousJumpHeight or 7.2
+        humanoid.AutoRotate = operatorState.previousAutoRotate ~= false
+
+        if operatorState.prompt then
+            operatorState.prompt.ActionText = "Tune"
+        end
+
+        addEventLogMessage("Operator station released.")
+
+        if resetOnRelease ~= false and resetGameSession then
+            resetGameSession("Tuner session reset.")
+        end
+
+        if hud then
+            hud.screenGui.Enabled = false
+        end
+    end
 end
 
 local function createText(parent, name, size, position, text, font, textSize, color)
@@ -101,6 +222,31 @@ end
 local function setSheetImageRect(image, rect)
     image.ImageRectOffset = rect.offset
     image.ImageRectSize = rect.size
+end
+
+local function createThreadOverlay(nodeOrb, name, rect, size, studsOffset)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = name
+    billboard.Adornee = nodeOrb
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = false
+    billboard.Size = size
+    billboard.StudsOffset = studsOffset
+    billboard.Parent = nodeOrb
+
+    local image = createSheetImage(
+        billboard,
+        "Icon",
+        TunerConfig.SpriteSheets.StatusAndTargetingIcons,
+        rect,
+        UDim2.fromScale(1, 1),
+        UDim2.fromScale(0, 0)
+    )
+
+    return {
+        billboard = billboard,
+        image = image,
+    }
 end
 
 local function createOrbGauge(parent)
@@ -357,12 +503,13 @@ local function createHud()
     screenGui.Name = "TunerHud"
     screenGui.ResetOnSpawn = false
     screenGui.IgnoreGuiInset = true
+    screenGui.Enabled = false
     screenGui.Parent = playerGui
 
     local panel = Instance.new("Frame")
     panel.Name = "Panel"
-    panel.Size = UDim2.fromOffset(360, 184)
-    panel.Position = UDim2.fromOffset(28, 28)
+    panel.Size = UDim2.fromOffset(288, 184)
+    panel.Position = UDim2.new(0, 0, 0.1, 28)
     panel.BackgroundColor3 = TunerConfig.Visuals.panelBackground
     panel.BackgroundTransparency = 0.12
     panel.BorderSizePixel = 0
@@ -576,12 +723,27 @@ local function collectThreadViews()
         if threadModel:IsA("Model") then
             local threadId = threadModel:GetAttribute("ThreadId") or threadModel.Name
             local coreAttachment = memoryCore:WaitForChild(string.format("CoreAttachment_%02d", threadStates[threadId].order))
+            local nodeOrb = threadModel:WaitForChild("NodeOrb")
+            local focusOverlay = createThreadOverlay(
+                nodeOrb,
+                "FocusOverlay",
+                TunerConfig.StatusIconRects.Focused,
+                UDim2.fromOffset(82, 82),
+                Vector3.new(0, 0, 0)
+            )
+            local markedOverlay = createThreadOverlay(
+                nodeOrb,
+                "MarkedOverlay",
+                TunerConfig.StatusIconRects.Marked,
+                UDim2.fromOffset(66, 66),
+                Vector3.new(0, 0.12, 0)
+            )
 
             threadViews[threadId] = {
                 model = threadModel,
                 anchorPart = threadModel:WaitForChild("AnchorPart"),
-                nodeOrb = threadModel:WaitForChild("NodeOrb"),
-                nodeOrbBaseSize = threadModel:WaitForChild("NodeOrb").Size,
+                nodeOrb = nodeOrb,
+                nodeOrbBaseSize = nodeOrb.Size,
                 nodePart = threadModel:WaitForChild("NodePart"),
                 beam = threadModel:WaitForChild("ThreadBeam"),
                 auraBeam = threadModel:WaitForChild("AuraBeam"),
@@ -592,6 +754,10 @@ local function collectThreadViews()
                 statusLabel = threadModel.NodeOrb.ThreadBillboard:WaitForChild("StatusLabel"),
                 selectionLabel = threadModel.NodeOrb.ThreadBillboard:WaitForChild("SelectionLabel"),
                 problemEmitter = threadModel.NodeOrb:WaitForChild("ProblemEmitter"),
+                focusReticleMesh = threadModel:WaitForChild("FocusReticleMesh"),
+                markedGlyphMesh = threadModel:WaitForChild("MarkedGlyphMesh"),
+                focusOverlay = focusOverlay,
+                markedOverlay = markedOverlay,
             }
         end
     end
@@ -729,7 +895,7 @@ local function refreshEventLog()
     hud.logScroll.CanvasPosition = Vector2.new(0, math.max(0, contentHeight - hud.logScroll.AbsoluteWindowSize.Y))
 end
 
-local function addEventLogMessage(message)
+function addEventLogMessage(message)
     table.insert(eventLog, string.format("%05.1fs  %s", runtimeClock, message))
 
     while #eventLog > 16 do
@@ -738,6 +904,34 @@ local function addEventLogMessage(message)
 
     if hud then
         refreshEventLog()
+    end
+end
+
+function resetGameSession(message)
+    threadStates = ThreadState.CreateThreads(TunerConfig.Challenge.threadCount)
+    challengeState.stability = TunerConfig.Challenge.startingStability
+    challengeState.memoryProgress = 0
+    challengeState.statusMessage = "Tune the unstable threads."
+    challengeState.statusTone = "Neutral"
+    feedbackState.tone = "Neutral"
+    feedbackState.text = ""
+    feedbackState.endsAt = 0
+    feedbackState.actionId = nil
+    feedbackState.iconKey = "Stable"
+    spawnClock = 0
+    eventLog = {}
+
+    selectionState:ClearFocus()
+    selectionState:ClearMarks()
+
+    if message then
+        addEventLogMessage(message)
+    elseif hud then
+        refreshEventLog()
+    end
+
+    if hud then
+        updateAllVisuals(runtimeClock)
     end
 end
 
@@ -847,6 +1041,16 @@ local function setEmitterState(emitter, enabled, color, rate)
     emitter.Rate = rate
 end
 
+local function getReticleCFrame(centerCFrame, now, spinDirection, phaseOffset)
+    local spinPeriod = 1
+    local axisPeriod = 8
+    local axisAngle = ((now + phaseOffset) / axisPeriod) * math.pi * 2
+    local tumbleAxis = Vector3.new(math.cos(axisAngle), 0, math.sin(axisAngle)).Unit
+    local spinAngle = (now / spinPeriod) * math.pi * 2 * spinDirection
+
+    return centerCFrame * CFrame.fromAxisAngle(tumbleAxis, spinAngle)
+end
+
 local function updateThreadVisual(threadId, now)
     local state = threadStates[threadId]
     local view = threadViews[threadId]
@@ -942,12 +1146,24 @@ local function updateThreadVisual(threadId, now)
     view.nameLabel.TextColor3 = isFocused and Color3.fromRGB(255, 255, 255) or TunerConfig.Visuals.stableAccentColor
     view.statusLabel.Text = statusText
     view.statusLabel.TextColor3 = beamColor
-    view.selectionLabel.Text = selectionText
+    view.selectionLabel.Text = " "
     view.selectionLabel.TextColor3 = isMarked and TunerConfig.Visuals.stableAccentColor or Color3.fromRGB(255, 255, 255)
+    view.focusOverlay.billboard.Enabled = false
+    view.markedOverlay.billboard.Enabled = false
+    view.focusOverlay.image.ImageTransparency = 1
+    view.markedOverlay.image.ImageTransparency = 1
+    view.focusReticleMesh.CFrame = getReticleCFrame(view.nodeOrb.CFrame, now, 1, state.order * 0.31)
+    view.markedGlyphMesh.CFrame = getReticleCFrame(view.nodeOrb.CFrame, now, -1, state.order * 0.31 + 2)
+    view.focusReticleMesh.Material = Enum.Material.Neon
+    view.markedGlyphMesh.Material = Enum.Material.Neon
+    view.focusReticleMesh.Color = TunerConfig.Visuals.stableColor:Lerp(Color3.new(1, 1, 1), 0.18)
+    view.markedGlyphMesh.Color = TunerConfig.Visuals.stableAccentColor:Lerp(Color3.new(1, 1, 1), 0.12)
+    view.focusReticleMesh.Transparency = operatorState.active and isFocused and 0.46 or 1
+    view.markedGlyphMesh.Transparency = operatorState.active and isMarked and 0.4 or 1
     setEmitterState(view.problemEmitter, emitterEnabled, beamColor, emitterRate)
 end
 
-local function updateAllVisuals(now)
+function updateAllVisuals(now)
     for _, threadId in ipairs(ThreadState.GetOrderedIds(threadStates)) do
         updateThreadVisual(threadId, now)
     end
@@ -965,6 +1181,22 @@ local function setStatusMessage(message, tone, actionId, iconKey)
     end
 
     updateHud()
+end
+
+function checkSessionEnd()
+    if not operatorState.active then
+        return
+    end
+
+    if challengeState.memoryProgress >= TunerConfig.Challenge.targetMemoryProgress then
+        addEventLogMessage("MEMORY RESTORED. Releasing operator station.")
+        setOperatorMode(false, operatorState.prompt, false)
+        resetGameSession("Tuner reset after memory restoration.")
+    elseif challengeState.stability <= 0 then
+        addEventLogMessage("STABILITY COLLAPSED. Releasing operator station.")
+        setOperatorMode(false, operatorState.prompt, false)
+        resetGameSession("Tuner reset after stability collapse.")
+    end
 end
 
 local function spawnProblem(now)
@@ -1015,15 +1247,14 @@ local function expireProblems(now)
     end
 
     clampChallengeState()
+    checkSessionEnd()
 end
 
 local function resolveAction(actionId, now)
     local targetIds = selectionState:GetEffectiveTargets()
 
     if #targetIds == 0 then
-        challengeState.stability -= TunerConfig.Challenge.emptyTargetPenalty
-        clampChallengeState()
-        setStatusMessage(string.format("NO TARGET  %s had no thread lock.", actionId), "Error", actionId, "Warning")
+        setStatusMessage(string.format("NO TARGET  %s had no thread lock.", actionId), "Warning", actionId, "Warning")
         return
     end
 
@@ -1067,6 +1298,8 @@ local function resolveAction(actionId, now)
     else
         setStatusMessage(string.format("MISFIRE  %s destabilized the target.", actionId), "Error", actionId, "Warning")
     end
+
+    checkSessionEnd()
 end
 
 collectThreadViews()
@@ -1074,10 +1307,17 @@ hud = createHud()
 addEventLogMessage("Tuner online. Monitoring memory threads.")
 
 local adapter = MouseKeyboardInputAdapter.new(TunerConfig, selectionState, {
+    isInputEnabled = function()
+        return operatorState.active
+    end,
     onSelectionChanged = function()
         updateHud()
     end,
     onActionRequested = function(actionId)
+        if not operatorState.active then
+            return
+        end
+
         resolveAction(actionId, runtimeClock)
     end,
 })
@@ -1090,19 +1330,37 @@ end
 
 adapter:Start(threadPartsById)
 
+ProximityPromptService.PromptTriggered:Connect(function(prompt, player)
+    if (player and player ~= localPlayer) or prompt.Name ~= "OperatorPrompt" then
+        return
+    end
+
+    setOperatorMode(not operatorState.active, prompt)
+end)
+
+localPlayer.CharacterAdded:Connect(function()
+    operatorState.active = false
+
+    if operatorState.prompt then
+        operatorState.prompt.ActionText = "Tune"
+    end
+end)
+
 updateAllVisuals(runtimeClock)
 tweenWorldPart(prototype.MemoryCore, { Size = Vector3.new(4.6, 4.6, 4.6) }, 1.8)
 tweenWorldPart(prototype.CoreGlow, { Size = Vector3.new(7.4, 7.4, 7.4) }, 1.8)
 
 RunService.Heartbeat:Connect(function(deltaTime)
     runtimeClock += deltaTime
-    spawnClock += deltaTime
 
-    expireProblems(runtimeClock)
+    if operatorState.active then
+        spawnClock += deltaTime
+        expireProblems(runtimeClock)
 
-    if spawnClock >= TunerConfig.Challenge.problemSpawnInterval then
-        spawnClock = 0
-        spawnProblem(runtimeClock)
+        if spawnClock >= TunerConfig.Challenge.problemSpawnInterval then
+            spawnClock = 0
+            spawnProblem(runtimeClock)
+        end
     end
 
     updateAllVisuals(runtimeClock)
