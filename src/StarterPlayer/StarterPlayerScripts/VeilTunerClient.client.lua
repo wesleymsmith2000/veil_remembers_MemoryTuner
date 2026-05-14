@@ -38,6 +38,7 @@ local feedbackState = {
     actionId = nil,
     iconKey = "Stable",
 }
+local eventLog = {}
 
 local function clampChallengeState()
     challengeState.stability = math.clamp(challengeState.stability, 0, 100)
@@ -102,68 +103,180 @@ local function setSheetImageRect(image, rect)
     image.ImageRectSize = rect.size
 end
 
-local function createMeter(parent, name, position, color)
+local function createOrbGauge(parent)
     local group = Instance.new("Frame")
-    group.Name = name
-    group.Size = UDim2.new(1, -32, 0, 48)
-    group.Position = position
+    group.Name = "ResourceOrb"
+    group.Size = UDim2.fromOffset(270, 146)
+    group.Position = UDim2.new(0, 28, 1, -232)
     group.BackgroundTransparency = 1
+    group.BorderSizePixel = 0
     group.Parent = parent
 
-    local label = createText(
+    local stabilityLabel = createText(
         group,
-        "Label",
-        UDim2.new(1, -70, 0, 18),
-        UDim2.fromOffset(0, 0),
-        "",
-        Enum.Font.GothamMedium,
-        13,
-        TunerConfig.Visuals.mutedTextColor
-    )
-
-    local valueLabel = createText(
-        group,
-        "Value",
-        UDim2.fromOffset(64, 18),
-        UDim2.new(1, -64, 0, 0),
+        "StabilityValue",
+        UDim2.fromOffset(76, 48),
+        UDim2.fromOffset(0, 48),
         "",
         Enum.Font.GothamBold,
-        14,
-        color
+        22,
+        TunerConfig.Visuals.stableColor
     )
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    stabilityLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-    local track = Instance.new("Frame")
-    track.Name = "Track"
-    track.Size = UDim2.new(1, 0, 0, 16)
-    track.Position = UDim2.fromOffset(0, 24)
-    track.BackgroundColor3 = Color3.fromRGB(9, 18, 30)
-    track.BorderSizePixel = 0
-    track.Parent = group
-    createCorner(track, 4)
-    createStroke(track, TunerConfig.Visuals.panelAccentDim, 1, 0.15)
+    local stabilityCaption = createText(
+        group,
+        "StabilityCaption",
+        UDim2.fromOffset(76, 20),
+        UDim2.fromOffset(0, 88),
+        "STABILITY",
+        Enum.Font.GothamBold,
+        10,
+        TunerConfig.Visuals.mutedTextColor
+    )
+    stabilityCaption.TextXAlignment = Enum.TextXAlignment.Center
 
-    local fill = Instance.new("Frame")
-    fill.Name = "Fill"
-    fill.Size = UDim2.fromScale(1, 1)
-    fill.BackgroundColor3 = color
-    fill.BorderSizePixel = 0
-    fill.Parent = track
-    createCorner(fill, 4)
+    local orb = Instance.new("Frame")
+    orb.Name = "Orb"
+    orb.Size = UDim2.fromOffset(118, 118)
+    orb.Position = UDim2.fromOffset(76, 14)
+    orb.BackgroundColor3 = Color3.fromRGB(5, 10, 18)
+    orb.BackgroundTransparency = 0.1
+    orb.BorderSizePixel = 0
+    orb.ClipsDescendants = true
+    orb.Parent = group
+    createCorner(orb, 59)
+    local orbStroke = createStroke(orb, TunerConfig.Visuals.panelAccent, 2, 0.08)
 
-    local fillGradient = Instance.new("UIGradient")
-    fillGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, color:Lerp(Color3.new(1, 1, 1), 0.15)),
-        ColorSequenceKeypoint.new(1, color),
-    })
-    fillGradient.Parent = fill
+    local fillRows = {}
+    local rowCount = 28
+    local rowHeight = 118 / rowCount
+    local radius = 59
+
+    for index = 1, rowCount do
+        local yCenter = 118 - ((index - 0.5) * rowHeight)
+        local distanceFromCenter = math.abs(yCenter - radius)
+        local halfWidth = math.sqrt(math.max(0, radius * radius - distanceFromCenter * distanceFromCenter))
+        local rowWidth = halfWidth * 2
+
+        local row = Instance.new("Frame")
+        row.Name = string.format("FillRow%02d", index)
+        row.AnchorPoint = Vector2.new(0.5, 1)
+        row.Size = UDim2.fromOffset(rowWidth, rowHeight + 0.8)
+        row.Position = UDim2.fromOffset(radius, 118 - ((index - 1) * rowHeight))
+        row.BackgroundColor3 = TunerConfig.Visuals.stableColor
+        row.BackgroundTransparency = 1
+        row.BorderSizePixel = 0
+        row.Parent = orb
+
+        table.insert(fillRows, row)
+    end
+
+    local glint = Instance.new("Frame")
+    glint.Name = "Glint"
+    glint.Size = UDim2.fromOffset(36, 12)
+    glint.Position = UDim2.fromOffset(26, 24)
+    glint.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    glint.BackgroundTransparency = 0.68
+    glint.BorderSizePixel = 0
+    glint.Parent = orb
+    createCorner(glint, 6)
+
+    local memoryLabel = createText(
+        group,
+        "MemoryValue",
+        UDim2.fromOffset(76, 48),
+        UDim2.fromOffset(194, 48),
+        "",
+        Enum.Font.GothamBold,
+        22,
+        TunerConfig.Visuals.memoryColor
+    )
+    memoryLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+    local memoryCaption = createText(
+        group,
+        "MemoryCaption",
+        UDim2.fromOffset(76, 20),
+        UDim2.fromOffset(194, 88),
+        "MEMORY",
+        Enum.Font.GothamBold,
+        10,
+        TunerConfig.Visuals.mutedTextColor
+    )
+    memoryCaption.TextXAlignment = Enum.TextXAlignment.Center
 
     return {
-        group = group,
-        label = label,
-        valueLabel = valueLabel,
-        fill = fill,
+        frame = group,
+        orb = orb,
+        stroke = orbStroke,
+        fillRows = fillRows,
+        stabilityLabel = stabilityLabel,
+        memoryLabel = memoryLabel,
     }
+end
+
+local function createEdgeWarning(parent)
+    local overlay = Instance.new("Frame")
+    overlay.Name = "LowStabilityEdgeWarning"
+    overlay.Size = UDim2.fromScale(1, 1)
+    overlay.Position = UDim2.fromScale(0, 0)
+    overlay.BackgroundTransparency = 1
+    overlay.BorderSizePixel = 0
+    overlay.ZIndex = 50
+    overlay.Parent = parent
+
+    local edgeColor = Color3.fromRGB(255, 46, 122)
+    local edges = {}
+
+    local function createEdge(name, size, position, rotation)
+        local edge = Instance.new("Frame")
+        edge.Name = name
+        edge.Size = size
+        edge.Position = position
+        edge.BackgroundColor3 = edgeColor
+        edge.BackgroundTransparency = 1
+        edge.BorderSizePixel = 0
+        edge.ZIndex = overlay.ZIndex
+        edge.Parent = overlay
+
+        local gradient = Instance.new("UIGradient")
+        gradient.Rotation = rotation
+        gradient.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+        gradient.Parent = edge
+
+        table.insert(edges, edge)
+    end
+
+    createEdge("Top", UDim2.new(1, 0, 0, 160), UDim2.fromOffset(0, 0), 90)
+    createEdge("Bottom", UDim2.new(1, 0, 0, 160), UDim2.new(0, 0, 1, -160), 270)
+    createEdge("Left", UDim2.new(0, 180, 1, 0), UDim2.fromOffset(0, 0), 0)
+    createEdge("Right", UDim2.new(0, 180, 1, 0), UDim2.new(1, -180, 0, 0), 180)
+
+    return {
+        frame = overlay,
+        edges = edges,
+    }
+end
+
+local function createLogLabel(parent, text)
+    local label = createText(
+        parent,
+        "LogEntry",
+        UDim2.new(1, -8, 0, 18),
+        UDim2.fromOffset(0, 0),
+        text,
+        Enum.Font.Gotham,
+        12,
+        TunerConfig.Visuals.mutedTextColor
+    )
+    label.TextWrapped = true
+    label.TextYAlignment = Enum.TextYAlignment.Center
+
+    return label
 end
 
 local function createActionChip(parent, actionId, actionConfig, order)
@@ -248,7 +361,7 @@ local function createHud()
 
     local panel = Instance.new("Frame")
     panel.Name = "Panel"
-    panel.Size = UDim2.fromOffset(470, 190)
+    panel.Size = UDim2.fromOffset(360, 184)
     panel.Position = UDim2.fromOffset(28, 28)
     panel.BackgroundColor3 = TunerConfig.Visuals.panelBackground
     panel.BackgroundTransparency = 0.12
@@ -289,27 +402,51 @@ local function createHud()
     )
     subtitleLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-    local stabilityMeter = createMeter(panel, "StabilityMeter", UDim2.fromOffset(16, 66), TunerConfig.Visuals.stableColor)
-    stabilityMeter.label.Text = "STABILITY"
-
-    local memoryMeter = createMeter(panel, "MemoryMeter", UDim2.fromOffset(16, 116), TunerConfig.Visuals.memoryColor)
-    memoryMeter.label.Text = "MEMORY PROGRESS"
-
-    local focusLabel = createText(
+    local logTitle = createText(
         panel,
-        "FocusLabel",
+        "LogTitle",
         UDim2.new(1, -32, 0, 24),
-        UDim2.fromOffset(16, 166),
-        "",
-        Enum.Font.GothamMedium,
-        14,
+        UDim2.fromOffset(16, 66),
+        "SIGNAL LOG",
+        Enum.Font.GothamBold,
+        13,
         TunerConfig.Visuals.textColor
     )
 
+    local logFrame = Instance.new("Frame")
+    logFrame.Name = "LogFrame"
+    logFrame.Size = UDim2.new(1, -32, 0, 82)
+    logFrame.Position = UDim2.fromOffset(16, 90)
+    logFrame.BackgroundColor3 = Color3.fromRGB(8, 15, 24)
+    logFrame.BackgroundTransparency = 0.08
+    logFrame.BorderSizePixel = 0
+    logFrame.Parent = panel
+    createCorner(logFrame, 5)
+    createStroke(logFrame, TunerConfig.Visuals.panelAccentDim, 1, 0.2)
+
+    local logScroll = Instance.new("ScrollingFrame")
+    logScroll.Name = "LogScroll"
+    logScroll.Size = UDim2.new(1, -16, 1, -10)
+    logScroll.Position = UDim2.fromOffset(8, 5)
+    logScroll.BackgroundTransparency = 1
+    logScroll.BorderSizePixel = 0
+    logScroll.ScrollBarThickness = 3
+    logScroll.CanvasSize = UDim2.fromOffset(0, 0)
+    logScroll.Parent = logFrame
+
+    local logList = Instance.new("UIListLayout")
+    logList.Name = "LogList"
+    logList.Padding = UDim.new(0, 2)
+    logList.SortOrder = Enum.SortOrder.LayoutOrder
+    logList.Parent = logScroll
+
+    local orbGauge = createOrbGauge(screenGui)
+    local edgeWarning = createEdgeWarning(screenGui)
+
     local banner = Instance.new("Frame")
-    banner.Name = "FeedbackBanner"
-    banner.Size = UDim2.fromOffset(390, 108)
-    banner.Position = UDim2.new(0.5, -195, 0, 26)
+    banner.Name = "StatusBanner"
+    banner.Size = UDim2.fromOffset(360, 112)
+    banner.Position = UDim2.new(1, -388, 0, 26)
     banner.BackgroundColor3 = Color3.fromRGB(12, 20, 31)
     banner.BackgroundTransparency = 0.08
     banner.BorderSizePixel = 0
@@ -317,22 +454,22 @@ local function createHud()
     createCorner(banner, 6)
     local bannerStroke = createStroke(banner, TunerConfig.Visuals.panelAccentDim, 1.6, 0.08)
 
-    local bannerIcon = createSheetImage(
+    local globalStatusLabel = createSheetImage(
         banner,
-        "StatusIcon",
-        TunerConfig.SpriteSheets.StatusAndTargetingIcons,
-        TunerConfig.StatusFeedbackIconRects.Stable,
-        UDim2.fromOffset(92, 82),
-        UDim2.fromOffset(14, 13)
-    )
-
-    local bannerLabelImage = createSheetImage(
-        banner,
-        "StatusLabelImage",
+        "GlobalStatusLabel",
         TunerConfig.SpriteSheets.StatusAndTargetingIcons,
         TunerConfig.StatusFeedbackLabelRects.Stable,
-        UDim2.fromOffset(248, 76),
-        UDim2.fromOffset(118, 16)
+        UDim2.fromOffset(128, 50),
+        UDim2.fromOffset(14, 31)
+    )
+
+    local focusStatusCard = createSheetImage(
+        banner,
+        "FocusStatusCard",
+        TunerConfig.SpriteSheets.StatusAndTargetingIcons,
+        TunerConfig.StatusCardTopRects.Stable,
+        UDim2.fromOffset(182, 82),
+        UDim2.fromOffset(158, 15)
     )
 
     local messageLabel = createText(
@@ -356,6 +493,60 @@ local function createHud()
     actionsRow.BackgroundTransparency = 1
     actionsRow.Parent = screenGui
 
+    local legendPanel = Instance.new("Frame")
+    legendPanel.Name = "ConditionLegend"
+    legendPanel.Size = UDim2.fromOffset(150, 424)
+    legendPanel.Position = UDim2.new(1, -178, 0, 152)
+    legendPanel.BackgroundColor3 = TunerConfig.Visuals.panelBackground
+    legendPanel.BackgroundTransparency = 0.14
+    legendPanel.BorderSizePixel = 0
+    legendPanel.Parent = screenGui
+    createCorner(legendPanel, 8)
+    createStroke(legendPanel, TunerConfig.Visuals.panelAccent, 1.4, 0.2)
+
+    local legendTitle = createText(
+        legendPanel,
+        "LegendTitle",
+        UDim2.new(1, -24, 0, 24),
+        UDim2.fromOffset(12, 10),
+        "INDEX",
+        Enum.Font.GothamBold,
+        14,
+        TunerConfig.Visuals.textColor
+    )
+    legendTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+    local legendEntries = {}
+
+    for index, problemId in ipairs(TunerConfig.ProblemOrder) do
+        local entryFrame = Instance.new("Frame")
+        entryFrame.Name = problemId
+        entryFrame.Size = UDim2.fromOffset(128, 88)
+        entryFrame.Position = UDim2.fromOffset(11, 38 + (index - 1) * 94)
+        entryFrame.BackgroundColor3 = Color3.fromRGB(8, 15, 24)
+        entryFrame.BackgroundTransparency = 0.18
+        entryFrame.BorderSizePixel = 0
+        entryFrame.Parent = legendPanel
+        createCorner(entryFrame, 5)
+        local entryStroke = createStroke(entryFrame, TunerConfig.Problems[problemId].color, 1.2, 0.65)
+
+        local entryImage = createSheetImage(
+            entryFrame,
+            "LegendImage",
+            TunerConfig.SpriteSheets.StatusAndTargetingIcons,
+            TunerConfig.StatusLegendRects[problemId],
+            UDim2.fromOffset(118, 78),
+            UDim2.fromOffset(5, 5)
+        )
+        entryImage.ImageTransparency = 0.48
+
+        legendEntries[problemId] = {
+            frame = entryFrame,
+            stroke = entryStroke,
+            image = entryImage,
+        }
+    end
+
     local actionChips = {}
 
     for order, actionId in ipairs(TunerConfig.ActionOrder) do
@@ -364,14 +555,16 @@ local function createHud()
 
     return {
         screenGui = screenGui,
-        stabilityMeter = stabilityMeter,
-        memoryMeter = memoryMeter,
-        focusLabel = focusLabel,
+        orbGauge = orbGauge,
+        edgeWarning = edgeWarning,
+        logScroll = logScroll,
+        logList = logList,
         messageLabel = messageLabel,
         banner = banner,
-        bannerIcon = bannerIcon,
-        bannerLabelImage = bannerLabelImage,
+        globalStatusLabel = globalStatusLabel,
+        focusStatusCard = focusStatusCard,
         bannerStroke = bannerStroke,
+        legendEntries = legendEntries,
         actionChips = actionChips,
     }
 end
@@ -445,11 +638,119 @@ local function getToneColor(tone)
     return TunerConfig.Visuals.panelAccent
 end
 
-local function setMeterValue(meter, value, maxValue)
-    local percent = math.clamp(value / maxValue, 0, 1)
+local stabilityGradientStops = {
+    { threshold = 100, color = Color3.fromRGB(111, 232, 255) },
+    { threshold = 85, color = Color3.fromRGB(111, 232, 255) },
+    { threshold = 70, color = Color3.fromRGB(63, 191, 214) },
+    { threshold = 55, color = Color3.fromRGB(143, 234, 154) },
+    { threshold = 40, color = Color3.fromRGB(255, 211, 106) },
+    { threshold = 25, color = Color3.fromRGB(255, 154, 61) },
+    { threshold = 10, color = Color3.fromRGB(255, 77, 77) },
+    { threshold = 0, color = Color3.fromRGB(255, 46, 122) },
+}
 
-    meter.fill.Size = UDim2.fromScale(percent, 1)
-    meter.valueLabel.Text = string.format("%d%%", math.floor(percent * 100 + 0.5))
+local function getStabilityColor(value)
+    local percent = math.clamp(value, 0, 100)
+
+    for index = 1, #stabilityGradientStops - 1 do
+        local high = stabilityGradientStops[index]
+        local low = stabilityGradientStops[index + 1]
+
+        if percent <= high.threshold and percent >= low.threshold then
+            local segmentRange = high.threshold - low.threshold
+            local alpha = segmentRange > 0 and (high.threshold - percent) / segmentRange or 0
+
+            return high.color:Lerp(low.color, alpha)
+        end
+    end
+
+    return stabilityGradientStops[#stabilityGradientStops].color
+end
+
+local function setOrbGaugeValue(gauge, stabilityValue, memoryValue)
+    local stabilityPercent = math.clamp(stabilityValue / 100, 0, 1)
+    local memoryPercent = math.clamp(memoryValue / TunerConfig.Challenge.targetMemoryProgress, 0, 1)
+    local stabilityColor = getStabilityColor(stabilityValue)
+
+    local visibleRows = memoryPercent * #gauge.fillRows
+
+    for index, row in ipairs(gauge.fillRows) do
+        local rowFill = math.clamp(visibleRows - index + 1, 0, 1)
+
+        row.BackgroundColor3 = stabilityColor:Lerp(Color3.new(1, 1, 1), rowFill * 0.12)
+        row.BackgroundTransparency = rowFill > 0 and (0.08 + (1 - rowFill) * 0.5) or 1
+    end
+
+    gauge.stroke.Color = stabilityColor
+    gauge.stroke.Transparency = 0.04 + (1 - stabilityPercent) * 0.32
+    gauge.stabilityLabel.Text = string.format("%d%%", math.floor(stabilityValue + 0.5))
+    gauge.stabilityLabel.TextColor3 = stabilityColor
+    gauge.memoryLabel.Text = string.format("%d%%", math.floor(memoryPercent * 100 + 0.5))
+end
+
+local function updateEdgeWarning(edgeWarning, stabilityValue, now)
+    if stabilityValue > 20 then
+        for _, edge in ipairs(edgeWarning.edges) do
+            edge.BackgroundTransparency = 1
+        end
+
+        return
+    end
+
+    local visibilityMultiplier = math.clamp((20 - stabilityValue) / 19, 0, 1)
+    local cycleDuration = 8 - visibilityMultiplier * 6
+    local pulse = (math.sin((now / cycleDuration) * math.pi * 2) + 1) / 2
+    local baseOpacity = 0.34
+    local pulseOpacity = pulse * 0.52
+    local opacity = math.clamp((baseOpacity + pulseOpacity) * visibilityMultiplier, 0, 0.86)
+    local transparency = 1 - opacity
+    local warningColor = getStabilityColor(stabilityValue)
+
+    for _, edge in ipairs(edgeWarning.edges) do
+        edge.BackgroundColor3 = warningColor
+        edge.BackgroundTransparency = transparency
+    end
+end
+
+local function refreshEventLog()
+    for _, child in ipairs(hud.logScroll:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+
+    for index, message in ipairs(eventLog) do
+        local label = createLogLabel(hud.logScroll, message)
+        label.LayoutOrder = index
+    end
+
+    local contentHeight = hud.logList.AbsoluteContentSize.Y
+    hud.logScroll.CanvasSize = UDim2.fromOffset(0, contentHeight)
+    hud.logScroll.CanvasPosition = Vector2.new(0, math.max(0, contentHeight - hud.logScroll.AbsoluteWindowSize.Y))
+end
+
+local function addEventLogMessage(message)
+    table.insert(eventLog, string.format("%05.1fs  %s", runtimeClock, message))
+
+    while #eventLog > 16 do
+        table.remove(eventLog, 1)
+    end
+
+    if hud then
+        refreshEventLog()
+    end
+end
+
+local function getActiveProblemIds()
+    local activeProblemIds = {}
+
+    for _, threadState in pairs(threadStates) do
+        if threadState.problemId then
+            activeProblemIds[threadState.problemId] = true
+        end
+    end
+
+    return activeProblemIds
 end
 
 local function pulseHud(tone, text, actionId, iconKey)
@@ -472,24 +773,29 @@ local function pulseHud(tone, text, actionId, iconKey)
     end
 end
 
-local function updateHudFeedback(now)
+local function updateStatusBanner(now)
     local active = now < feedbackState.endsAt
     local toneColor = active and getToneColor(feedbackState.tone) or TunerConfig.Visuals.panelAccentDim
-    local iconKey = active and feedbackState.iconKey or "Stable"
-    local iconRect = TunerConfig.StatusFeedbackIconRects[iconKey] or TunerConfig.StatusFeedbackIconRects.Stable
-    local labelRect = TunerConfig.StatusFeedbackLabelRects[iconKey] or TunerConfig.StatusFeedbackLabelRects.Stable
+    local focusedIds = selectionState:GetFocusedThreadIds()
+    local focusedThreadId = focusedIds[1]
+    local focusedProblem = focusedThreadId and threadStates[focusedThreadId].problemId or nil
+    local focusedIconKey = focusedProblem and TunerConfig.Problems[focusedProblem].iconKey or "Stable"
+    local globalIconKey = ThreadState.GetActiveProblemCount(threadStates) > 0 and "Warning" or "Stable"
+    local globalLabelRect = TunerConfig.StatusFeedbackLabelRects[globalIconKey]
+    local focusedCardRect = TunerConfig.StatusCardTopRects[focusedIconKey] or TunerConfig.StatusCardTopRects.Stable
+    local activeProblemIds = getActiveProblemIds()
 
     hud.messageLabel.Text = active and feedbackState.text or challengeState.statusMessage
     hud.messageLabel.TextColor3 = active and toneColor or TunerConfig.Visuals.textColor
-    hud.bannerIcon.ImageColor3 = Color3.new(1, 1, 1)
-    hud.bannerIcon.ImageTransparency = 0
-    hud.bannerLabelImage.ImageColor3 = Color3.new(1, 1, 1)
-    hud.bannerLabelImage.ImageTransparency = 0
-    setSheetImageRect(hud.bannerIcon, iconRect)
-    setSheetImageRect(hud.bannerLabelImage, labelRect)
-    hud.bannerStroke.Color = toneColor
-    hud.bannerStroke.Thickness = active and 2.4 or 1.4
-    hud.banner.BackgroundColor3 = active and Color3.fromRGB(12, 25, 32) or Color3.fromRGB(12, 20, 31)
+    hud.globalStatusLabel.ImageColor3 = Color3.new(1, 1, 1)
+    hud.globalStatusLabel.ImageTransparency = 0
+    setSheetImageRect(hud.globalStatusLabel, globalLabelRect)
+    hud.focusStatusCard.ImageColor3 = Color3.new(1, 1, 1)
+    hud.focusStatusCard.ImageTransparency = focusedThreadId and 0 or 0.18
+    setSheetImageRect(hud.focusStatusCard, focusedCardRect)
+    hud.bannerStroke.Color = globalIconKey == "Warning" and TunerConfig.Visuals.warningColor or TunerConfig.Visuals.stableColor
+    hud.bannerStroke.Thickness = 1.8
+    hud.banner.BackgroundColor3 = globalIconKey == "Warning" and Color3.fromRGB(34, 14, 14) or Color3.fromRGB(12, 20, 31)
 
     for actionId, chip in pairs(hud.actionChips) do
         local actionColor = TunerConfig.Actions[actionId].color
@@ -499,6 +805,15 @@ local function updateHudFeedback(now)
         chip.stroke.Thickness = isActiveAction and 3 or 1.5
         chip.frame.BackgroundColor3 = isActiveAction and Color3.fromRGB(20, 34, 34) or Color3.fromRGB(10, 18, 30)
     end
+
+    for problemId, entry in pairs(hud.legendEntries) do
+        local isActiveProblem = activeProblemIds[problemId] == true
+
+        entry.image.ImageTransparency = isActiveProblem and 0 or 0.58
+        entry.frame.BackgroundTransparency = isActiveProblem and 0.02 or 0.22
+        entry.stroke.Transparency = isActiveProblem and 0.08 or 0.72
+        entry.stroke.Thickness = isActiveProblem and 2 or 1.2
+    end
 end
 
 local function updateHud()
@@ -507,20 +822,16 @@ local function updateHud()
     local focusedThreadId = focusedIds[1]
     local focusedProblem = focusedThreadId and threadStates[focusedThreadId].problemId or nil
 
-    setMeterValue(hud.stabilityMeter, challengeState.stability, 100)
-    setMeterValue(hud.memoryMeter, challengeState.memoryProgress, TunerConfig.Challenge.targetMemoryProgress)
+    setOrbGaugeValue(hud.orbGauge, challengeState.stability, challengeState.memoryProgress)
+    updateEdgeWarning(hud.edgeWarning, challengeState.stability, runtimeClock)
 
-    if focusedThreadId then
-        hud.focusLabel.Text = string.format(
-            "FOCUS  %s%s",
-            focusedThreadId,
-            focusedProblem and string.format("  /  %s", focusedProblem) or "  /  STABLE"
-        )
-    else
-        hud.focusLabel.Text = string.format("FOCUS  NONE  /  MARKED %d", #markedIds)
-    end
+    challengeState.statusMessage = focusedThreadId and string.format(
+        "Focus %s%s",
+        focusedThreadId,
+        focusedProblem and string.format(" / %s", focusedProblem) or " / Stable"
+    ) or string.format("Focus none / Marked %d", #markedIds)
 
-    updateHudFeedback(runtimeClock)
+    updateStatusBanner(runtimeClock)
 end
 
 local function colorSequence(fromColor, toColor)
@@ -647,6 +958,7 @@ end
 local function setStatusMessage(message, tone, actionId, iconKey)
     challengeState.statusMessage = message
     challengeState.statusTone = tone or "Neutral"
+    addEventLogMessage(message)
 
     if tone and tone ~= "Neutral" then
         pulseHud(tone, message, actionId, iconKey)
@@ -759,6 +1071,7 @@ end
 
 collectThreadViews()
 hud = createHud()
+addEventLogMessage("Tuner online. Monitoring memory threads.")
 
 local adapter = MouseKeyboardInputAdapter.new(TunerConfig, selectionState, {
     onSelectionChanged = function()

@@ -35,6 +35,24 @@ TunerConfig.StatusFeedbackIconRects = {
     Warning = { offset = Vector2.new(776, 426), size = Vector2.new(167, 148) },
 }
 
+TunerConfig.StatusCardTopRects = {
+    Static = { offset = Vector2.new(34, 96), size = Vector2.new(239, 204) },
+    Drift = { offset = Vector2.new(288, 96), size = Vector2.new(239, 204) },
+    Dissonance = { offset = Vector2.new(521, 96), size = Vector2.new(239, 204) },
+    Overload = { offset = Vector2.new(755, 96), size = Vector2.new(239, 204) },
+    Stable = { offset = Vector2.new(34, 413), size = Vector2.new(239, 204) },
+    Focused = { offset = Vector2.new(288, 413), size = Vector2.new(239, 204) },
+    Marked = { offset = Vector2.new(521, 413), size = Vector2.new(239, 204) },
+    Warning = { offset = Vector2.new(755, 413), size = Vector2.new(239, 204) },
+}
+
+TunerConfig.StatusLegendRects = {
+    Static = { offset = Vector2.new(53, 300), size = Vector2.new(204, 96) },
+    Drift = { offset = Vector2.new(307, 300), size = Vector2.new(204, 96) },
+    Dissonance = { offset = Vector2.new(541, 300), size = Vector2.new(204, 96) },
+    Overload = { offset = Vector2.new(775, 300), size = Vector2.new(204, 96) },
+}
+
 TunerConfig.StatusFeedbackLabelRects = {
     Static = { offset = Vector2.new(89, 274), size = Vector2.new(145, 44) },
     Drift = { offset = Vector2.new(319, 274), size = Vector2.new(145, 44) },
