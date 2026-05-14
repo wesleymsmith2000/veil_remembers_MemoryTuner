@@ -1,0 +1,20 @@
+Import and assemble the Veil Memory Tuner MVP model kit in Roblox Studio.
+
+Use these imported meshes:
+- vmt_tuner_console_blockout.obj
+- vmt_memory_core_crystal.obj
+- vmt_thread_anchor_pylon.obj
+- vmt_marked_selection_glyph.obj
+- vmt_focus_reticle.obj
+- vmt_tuner_floor_ring.obj
+
+Create a Workspace/TunerPrototype model:
+- Place the floor ring at origin.
+- Place the memory core at the center.
+- Place four thread anchor pylons around the ring.
+- Place the tuner console in front of the core.
+- Add Attachments to each anchor top and to the memory core.
+- Create Beam objects between each anchor attachment and the core attachment.
+- Add invisible NodeParts along each thread for hover/click targeting.
+- Add BillboardGui labels for thread number/problem state.
+- Use the SelectionState and ActionResolver modules from the handoff.

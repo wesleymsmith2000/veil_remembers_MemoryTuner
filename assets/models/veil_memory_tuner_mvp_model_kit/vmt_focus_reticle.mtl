@@ -1,0 +1,13 @@
+# Materials for VMT_FocusReticle
+newmtl CyanReticle
+Kd 0.120 0.850 1.000
+Ka 0.030 0.212 0.250
+Ks 0.250 0.250 0.250
+Ns 40
+
+newmtl WhiteHot
+Kd 0.900 0.950 1.000
+Ka 0.225 0.237 0.250
+Ks 0.250 0.250 0.250
+Ns 40
+

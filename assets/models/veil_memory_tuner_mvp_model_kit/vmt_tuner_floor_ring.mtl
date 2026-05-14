@@ -1,0 +1,19 @@
+# Materials for VMT_TunerFloorRing_Blockout
+newmtl DarkMetal
+Kd 0.060 0.055 0.075
+Ka 0.015 0.014 0.019
+Ks 0.250 0.250 0.250
+Ns 40
+
+newmtl GoldTrim
+Kd 1.000 0.720 0.250
+Ka 0.250 0.180 0.062
+Ks 0.250 0.250 0.250
+Ns 40
+
+newmtl DeepBluePanel
+Kd 0.040 0.100 0.200
+Ka 0.010 0.025 0.050
+Ks 0.250 0.250 0.250
+Ns 40
+

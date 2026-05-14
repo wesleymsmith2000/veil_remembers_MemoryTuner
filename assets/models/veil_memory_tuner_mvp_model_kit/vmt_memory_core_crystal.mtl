@@ -1,0 +1,25 @@
+# Materials for VMT_MemoryCore_Crystal
+newmtl CyanCrystal
+Kd 0.120 0.850 1.000
+Ka 0.030 0.212 0.250
+Ks 0.250 0.250 0.250
+Ns 40
+
+newmtl GoldBase
+Kd 1.000 0.720 0.250
+Ka 0.250 0.180 0.062
+Ks 0.250 0.250 0.250
+Ns 40
+
+newmtl DarkMetal
+Kd 0.060 0.055 0.075
+Ka 0.015 0.014 0.019
+Ks 0.250 0.250 0.250
+Ns 40
+
+newmtl VioletCore
+Kd 0.550 0.280 1.000
+Ka 0.138 0.070 0.250
+Ks 0.250 0.250 0.250
+Ns 40
+

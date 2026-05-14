@@ -1,0 +1,13 @@
+# Materials for VMT_MarkedSelectionGlyph
+newmtl GoldGlyph
+Kd 1.000 0.720 0.250
+Ka 0.250 0.180 0.062
+Ks 0.250 0.250 0.250
+Ns 40
+
+newmtl CyanAccent
+Kd 0.120 0.850 1.000
+Ka 0.030 0.212 0.250
+Ks 0.250 0.250 0.250
+Ns 40
+
