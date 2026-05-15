@@ -4,6 +4,10 @@ TunerConfig.SpriteSheets = {
     CoreActionIcons = "rbxassetid://126042074039272",
     StatusAndTargetingIcons = "rbxassetid://134906789981907",
     UIKit = "rbxassetid://131908294208637",
+    PhaseAIcons = "rbxassetid://101691093991052",
+    PhaseAVFXParticles = "rbxassetid://82209943874304",
+    PhaseAPulseStrips = "rbxassetid://75427550777704",
+    PhaseAUI = "rbxassetid://122642911707750",
 }
 
 TunerConfig.Meshes = {
@@ -13,6 +17,18 @@ TunerConfig.Meshes = {
     ThreadAnchorPylon = "rbxassetid://113996561845526",
     FocusReticle = "rbxassetid://95443014296854",
     MarkedSelectionGlyph = "rbxassetid://135002496816935",
+    PhaseAChamberFloorRing = "rbxassetid://128922939687344",
+    PhaseACentralTunerPlatform = "rbxassetid://71569468923422",
+    PhaseAMemoryCrystalActive = "rbxassetid://88467043424662",
+    PhaseAMemoryCrystalDormant = "rbxassetid://130661358162020",
+    PhaseACrystalPedestalActive = "rbxassetid://113304319519645",
+    PhaseACrystalPedestalDormant = "rbxassetid://131210414840358",
+    PhaseAPerimeterPylonActive = "rbxassetid://79801229367615",
+    PhaseAPerimeterPylonDormant = "rbxassetid://127705957523957",
+    PhaseARoofAnchorActive = "rbxassetid://101911437918215",
+    PhaseARoofAnchorDormant = "rbxassetid://112671042350784",
+    PhaseARoofOculus = "rbxassetid://119639380823955",
+    PhaseADomeRib = "rbxassetid://81127341579433",
 }
 
 TunerConfig.ActionIconRects = {
@@ -31,6 +47,64 @@ TunerConfig.StatusIconRects = {
     Focused = { offset = Vector2.new(339, 580), size = Vector2.new(113, 113) },
     Marked = { offset = Vector2.new(574, 580), size = Vector2.new(106, 113) },
     Warning = { offset = Vector2.new(805, 580), size = Vector2.new(118, 112) },
+}
+
+TunerConfig.PhaseAIconRects = {
+    ActiveLane = { offset = Vector2.new(0, 0), size = Vector2.new(256, 256) },
+    DormantLane = { offset = Vector2.new(256, 0), size = Vector2.new(256, 256) },
+    RoofOculus = { offset = Vector2.new(512, 0), size = Vector2.new(256, 256) },
+    MemoryCrystalActive = { offset = Vector2.new(768, 0), size = Vector2.new(256, 256) },
+    MemoryCrystalDormant = { offset = Vector2.new(0, 256), size = Vector2.new(256, 256) },
+    PylonActive = { offset = Vector2.new(256, 256), size = Vector2.new(256, 256) },
+    PylonDormant = { offset = Vector2.new(512, 256), size = Vector2.new(256, 256) },
+    ThreadActive = { offset = Vector2.new(768, 256), size = Vector2.new(256, 256) },
+    ThreadDormant = { offset = Vector2.new(0, 512), size = Vector2.new(256, 256) },
+    Focused = { offset = Vector2.new(256, 512), size = Vector2.new(256, 256) },
+    Marked = { offset = Vector2.new(512, 512), size = Vector2.new(256, 256) },
+    Warning = { offset = Vector2.new(768, 512), size = Vector2.new(256, 256) },
+    Static = { offset = Vector2.new(0, 768), size = Vector2.new(256, 256) },
+    Drift = { offset = Vector2.new(256, 768), size = Vector2.new(256, 256) },
+    Dissonance = { offset = Vector2.new(512, 768), size = Vector2.new(256, 256) },
+    Overload = { offset = Vector2.new(768, 768), size = Vector2.new(256, 256) },
+}
+
+TunerConfig.PhaseAVFXParticleRects = {
+    SoftGlowCyan = { offset = Vector2.new(0, 0), size = Vector2.new(256, 256) },
+    SoftGlowGold = { offset = Vector2.new(256, 0), size = Vector2.new(256, 256) },
+    SoftGlowViolet = { offset = Vector2.new(512, 0), size = Vector2.new(256, 256) },
+    SoftGlowRed = { offset = Vector2.new(768, 0), size = Vector2.new(256, 256) },
+    RippleRingCyan = { offset = Vector2.new(0, 256), size = Vector2.new(256, 256) },
+    RippleRingGold = { offset = Vector2.new(256, 256), size = Vector2.new(256, 256) },
+    RippleRingViolet = { offset = Vector2.new(512, 256), size = Vector2.new(256, 256) },
+    RippleRingRed = { offset = Vector2.new(768, 256), size = Vector2.new(256, 256) },
+    StarBurstCyan = { offset = Vector2.new(0, 512), size = Vector2.new(256, 256) },
+    StarBurstGold = { offset = Vector2.new(256, 512), size = Vector2.new(256, 256) },
+    StaticNoiseWhite = { offset = Vector2.new(512, 512), size = Vector2.new(256, 256) },
+    StaticNoiseViolet = { offset = Vector2.new(768, 512), size = Vector2.new(256, 256) },
+    SparkShardRed = { offset = Vector2.new(0, 768), size = Vector2.new(256, 256) },
+    SparkShardGold = { offset = Vector2.new(256, 768), size = Vector2.new(256, 256) },
+    SparkShardCyan = { offset = Vector2.new(512, 768), size = Vector2.new(256, 256) },
+    SmokeWispBlue = { offset = Vector2.new(768, 768), size = Vector2.new(256, 256) },
+}
+
+TunerConfig.PhaseAPulseStripRects = {
+    PulseCyan = { offset = Vector2.new(0, 0), size = Vector2.new(1024, 128), frames = 8, frameSize = Vector2.new(128, 128) },
+    PulseGold = { offset = Vector2.new(0, 128), size = Vector2.new(1024, 128), frames = 8, frameSize = Vector2.new(128, 128) },
+    PulseViolet = { offset = Vector2.new(0, 256), size = Vector2.new(1024, 128), frames = 8, frameSize = Vector2.new(128, 128) },
+    PulseRed = { offset = Vector2.new(0, 384), size = Vector2.new(1024, 128), frames = 8, frameSize = Vector2.new(128, 128) },
+}
+
+TunerConfig.PhaseAUIRects = {
+    PanelBorderGold = { offset = Vector2.new(0, 0), size = Vector2.new(384, 160) },
+    ButtonCleanse = { offset = Vector2.new(0, 192), size = Vector2.new(256, 96) },
+    ButtonAnchor = { offset = Vector2.new(256, 192), size = Vector2.new(256, 96) },
+    ButtonHarmonize = { offset = Vector2.new(512, 192), size = Vector2.new(256, 96) },
+    ButtonVent = { offset = Vector2.new(768, 192), size = Vector2.new(256, 96) },
+    StabilityMeterSample = { offset = Vector2.new(0, 320), size = Vector2.new(448, 80) },
+    MemoryMeterSample = { offset = Vector2.new(0, 416), size = Vector2.new(448, 80) },
+    ActiveLaneLabel = { offset = Vector2.new(512, 320), size = Vector2.new(384, 64) },
+    DormantLaneLabel = { offset = Vector2.new(512, 384), size = Vector2.new(384, 64) },
+    WarningBanner = { offset = Vector2.new(512, 448), size = Vector2.new(384, 64) },
 }
 
 TunerConfig.StatusFeedbackIconRects = {

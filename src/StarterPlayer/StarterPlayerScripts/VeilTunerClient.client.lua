@@ -18,7 +18,7 @@ local MouseKeyboardInputAdapter = require(script.Parent:WaitForChild("InputAdapt
 local selectionState = SelectionState.new()
 local threadStates = ThreadState.CreateThreads(TunerConfig.Challenge.threadCount)
 local prototype = workspace:WaitForChild("TunerPrototype")
-local threadsFolder = prototype:WaitForChild("Threads")
+local memoryLanesFolder = prototype:WaitForChild("MemoryLanes")
 local rng = Random.new()
 
 local challengeState = {
@@ -719,11 +719,19 @@ end
 local function collectThreadViews()
     local memoryCore = prototype:WaitForChild("MemoryCore")
 
-    for _, threadModel in ipairs(threadsFolder:GetChildren()) do
-        if threadModel:IsA("Model") then
+    for _, threadModel in ipairs(memoryLanesFolder:GetChildren()) do
+        if threadModel:IsA("Model") and threadModel:GetAttribute("IsActive") then
             local threadId = threadModel:GetAttribute("ThreadId") or threadModel.Name
+            local threadState = threadStates[threadId]
+
+            if not threadState then
+                continue
+            end
+
             local coreAttachment = memoryCore:WaitForChild(string.format("CoreAttachment_%02d", threadStates[threadId].order))
             local nodeOrb = threadModel:WaitForChild("NodeOrb")
+            local interaction = threadModel:WaitForChild("Interaction")
+            local threadVisuals = threadModel:WaitForChild("ThreadVisuals")
             local focusOverlay = createThreadOverlay(
                 nodeOrb,
                 "FocusOverlay",
@@ -744,9 +752,9 @@ local function collectThreadViews()
                 anchorPart = threadModel:WaitForChild("AnchorPart"),
                 nodeOrb = nodeOrb,
                 nodeOrbBaseSize = nodeOrb.Size,
-                nodePart = threadModel:WaitForChild("NodePart"),
-                beam = threadModel:WaitForChild("ThreadBeam"),
-                auraBeam = threadModel:WaitForChild("AuraBeam"),
+                nodePart = interaction:WaitForChild(string.format("NodePart_%02d", threadModel:GetAttribute("LaneId"))),
+                beam = threadVisuals:WaitForChild("ThreadBeam"),
+                auraBeam = threadVisuals:WaitForChild("AuraBeam"),
                 coreAttachment = coreAttachment,
                 coreAttachmentBasePosition = coreAttachment.Position,
                 billboard = threadModel.NodeOrb:WaitForChild("ThreadBillboard"),

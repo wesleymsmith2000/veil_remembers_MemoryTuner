@@ -1,0 +1,9 @@
+LaneId,Compass,AngleDegrees,CrystalRadius,PylonRadius,RoofAnchorRadius,ActiveMVP
+Lane_01,North,90.0,26,42,13,True
+Lane_02,North-East,45.0,26,42,13,False
+Lane_03,East,0.0,26,42,13,True
+Lane_04,South-East,-45.0,26,42,13,False
+Lane_05,South,-90.0,26,42,13,True
+Lane_06,South-West,-135.0,26,42,13,False
+Lane_07,West,-180.0,26,42,13,True
+Lane_08,North-West,-225.0,26,42,13,False

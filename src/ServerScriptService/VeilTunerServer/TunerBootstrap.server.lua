@@ -7,6 +7,14 @@ local TunerConfig = require(ReplicatedStorage:WaitForChild("VeilTuner"):WaitForC
 
 local prototypeName = "TunerPrototype"
 
+local function createFolder(parent, name)
+    local folder = Instance.new("Folder")
+    folder.Name = name
+    folder.Parent = parent
+
+    return folder
+end
+
 local function createPart(parent, name, size, cframe, color, material)
     local part = Instance.new("Part")
     part.Name = name
@@ -80,6 +88,21 @@ local function createPrompt(parent, actionText, objectText)
     return prompt
 end
 
+local function createRod(parent, name, startPosition, endPosition, thickness, color, material)
+    local delta = endPosition - startPosition
+    local rod = createPart(
+        parent,
+        name,
+        Vector3.new(thickness, thickness, delta.Magnitude),
+        CFrame.lookAt((startPosition + endPosition) / 2, endPosition),
+        color,
+        material
+    )
+    rod.CanCollide = false
+
+    return rod
+end
+
 local function createLabel(parent, name, size, position, text, textSize, color)
     local label = Instance.new("TextLabel")
     label.Name = name
@@ -114,8 +137,23 @@ prototype.Name = prototypeName
 prototype.Parent = Workspace
 
 local worldOrigin = TunerConfig.World.origin
+local activeLaneIds = { 1, 3, 5, 7 }
+local chamberRotationOffset = math.rad(22.5)
+local activeLaneOrder = {}
+
+for order, laneId in ipairs(activeLaneIds) do
+    activeLaneOrder[laneId] = order
+end
+
+local chamber = createFolder(prototype, "Chamber")
+local domeRibs = createFolder(chamber, "DomeRibs")
+local outerPylons = createFolder(chamber, "OuterPylons")
+local centralTuner = createFolder(prototype, "CentralTuner")
+local tunerAttachments = createFolder(centralTuner, "TunerAttachments")
+local memoryLanes = createFolder(prototype, "MemoryLanes")
+
 local base = createPart(
-    prototype,
+    chamber,
     "ConsoleBase",
     TunerConfig.World.consoleSize,
     worldOrigin * CFrame.new(0, -2.5, 0),
@@ -124,21 +162,23 @@ local base = createPart(
 )
 base.Transparency = 0.08
 
-local consoleDeck = createPart(
-    prototype,
-    "ConsoleDeck",
-    Vector3.new(64, 1, 64),
+local consoleDeck = createMeshPart(
+    centralTuner,
+    "TunerPlatform",
+    TunerConfig.Meshes.PhaseACentralTunerPlatform,
+    Vector3.new(1, 1, 1),
     worldOrigin * CFrame.new(0, -0.8, 0),
     Color3.fromRGB(20, 28, 42),
     Enum.Material.Metal
 )
 consoleDeck.Transparency = 0.05
+consoleDeck.CanCollide = false
 
 local floorRing = createMeshPart(
-    prototype,
-    "TunerFloorRingMesh",
-    TunerConfig.Meshes.FloorRing,
-    Vector3.new(56, 1, 56),
+    chamber,
+    "FloorRing",
+    TunerConfig.Meshes.PhaseAChamberFloorRing,
+    Vector3.new(1, 1, 1),
     worldOrigin * CFrame.new(0, -1.45, 0),
     Color3.fromRGB(32, 48, 66),
     Enum.Material.Metal
@@ -146,9 +186,9 @@ local floorRing = createMeshPart(
 floorRing.CanCollide = false
 
 local platformCollider = createPart(
-    prototype,
+    chamber,
     "PlatformCollider",
-    Vector3.new(64, 1.2, 64),
+    Vector3.new(72, 1.2, 72),
     worldOrigin * CFrame.new(0, -0.65, 0),
     Color3.fromRGB(255, 255, 255),
     Enum.Material.SmoothPlastic
@@ -156,6 +196,46 @@ local platformCollider = createPart(
 platformCollider.Shape = Enum.PartType.Cylinder
 platformCollider.Transparency = 1
 platformCollider.CanCollide = true
+
+local domeShell = createPart(
+    chamber,
+    "DomeShell",
+    Vector3.new(92, 1.4, 92),
+    worldOrigin * CFrame.new(0, 39, 0),
+    Color3.fromRGB(12, 20, 33),
+    Enum.Material.Glass
+)
+domeShell.Shape = Enum.PartType.Ball
+domeShell.Transparency = 1
+domeShell.CanCollide = false
+createPointLight(domeShell, Color3.fromRGB(80, 120, 155), 0.5, 75)
+
+local roofOculus = createMeshPart(
+    chamber,
+    "RoofOculus",
+    TunerConfig.Meshes.PhaseARoofOculus,
+    Vector3.new(2, 1, 2),
+    worldOrigin * CFrame.new(0, 51, 0),
+    TunerConfig.Visuals.memoryColor,
+    Enum.Material.Neon
+)
+roofOculus.Transparency = 0.28
+roofOculus.CanCollide = false
+createPointLight(roofOculus, TunerConfig.Visuals.memoryColor, 1.8, 42)
+
+for laneId = 1, 8 do
+    local angle = ((laneId - 1) / 8) * math.pi * 2 - math.pi / 2 + chamberRotationOffset
+    local rib = createMeshPart(
+        domeRibs,
+        string.format("DomeRib_%02d", laneId),
+        TunerConfig.Meshes.PhaseADomeRib,
+        Vector3.new(1.25, 1, 1.25),
+        worldOrigin * CFrame.new(0, 49, 0) * CFrame.Angles(0, angle, 0),
+        Color3.fromRGB(42, 60, 82),
+        Enum.Material.Metal
+    )
+    rib.Transparency = 0.18
+end
 
 local memoryCore = createPart(
     prototype,
@@ -169,7 +249,7 @@ memoryCore.Shape = Enum.PartType.Ball
 memoryCore.Transparency = 0
 
 local memoryCoreMesh = createMeshPart(
-    prototype,
+    centralTuner,
     "MemoryCoreCrystalMesh",
     TunerConfig.Meshes.MemoryCoreCrystal,
     Vector3.new(4.2, 4.2, 4.2),
@@ -318,70 +398,340 @@ consoleLight.CanCollide = false
 createPointLight(consoleLight, TunerConfig.Visuals.stableAccentColor, 0.85, 10)
 createPrompt(consoleBase, "Tune", "Memory Tuner")
 
-for index = 1, TunerConfig.Challenge.threadCount do
-    local angle = ((index - 1) / TunerConfig.Challenge.threadCount) * math.pi * 2 - math.pi / 2
-        + TunerConfig.World.threadAngleOffset
-    local threadId = string.format("Thread_%02d", index)
-    local threadModel = Instance.new("Model")
-    threadModel.Name = threadId
-    threadModel:SetAttribute("ThreadId", threadId)
-    threadModel.Parent = threadsFolder
+local function createThreadBeam(parent, name, attachment0, attachment1, width0, width1, color, transparency)
+    local beam = Instance.new("Beam")
+    beam.Name = name
+    beam.Attachment0 = attachment0
+    beam.Attachment1 = attachment1
+    beam.Width0 = width0
+    beam.Width1 = width1
+    beam.Color = ColorSequence.new(color)
+    beam.Transparency = NumberSequence.new(transparency or 0)
+    beam.LightEmission = 1
+    beam.LightInfluence = 0
+    beam.FaceCamera = true
+    beam.TextureSpeed = 0.25
+    beam.Parent = parent
 
-    local anchorPosition = worldOrigin.Position + Vector3.new(
-        math.cos(angle) * TunerConfig.World.threadRadius,
-        0,
-        math.sin(angle) * TunerConfig.World.threadRadius
+    return beam
+end
+
+local function catmullRom(p0, p1, p2, p3, t)
+    local t2 = t * t
+    local t3 = t2 * t
+
+    return (p1 * 2 + (p2 - p0) * t + (p0 * 2 - p1 * 5 + p2 * 4 - p3) * t2
+        + (-p0 + p1 * 3 - p2 * 3 + p3) * t3) * 0.5
+end
+
+local function sampleCatmullRomPath(points, samplesPerSpan)
+    local sampledPoints = {}
+
+    for spanIndex = 1, #points - 1 do
+        local p0 = points[math.max(spanIndex - 1, 1)]
+        local p1 = points[spanIndex]
+        local p2 = points[spanIndex + 1]
+        local p3 = points[math.min(spanIndex + 2, #points)]
+
+        for sampleIndex = 0, samplesPerSpan - 1 do
+            table.insert(sampledPoints, catmullRom(p0, p1, p2, p3, sampleIndex / samplesPerSpan))
+        end
+    end
+
+    table.insert(sampledPoints, points[#points])
+
+    return sampledPoints
+end
+
+for laneId = 1, 8 do
+    local activeOrder = activeLaneOrder[laneId]
+    local isActive = activeOrder ~= nil
+    local laneName = string.format("Lane_%02d", laneId)
+    local threadId = isActive and string.format("Thread_%02d", activeOrder) or nil
+    local angle = ((laneId - 1) / 8) * math.pi * 2 - math.pi / 2 + chamberRotationOffset
+    local direction = Vector3.new(math.cos(angle), 0, math.sin(angle))
+    local laneColor = isActive and TunerConfig.Visuals.stableColor or Color3.fromRGB(42, 62, 82)
+    local laneAccent = isActive and TunerConfig.Visuals.stableAccentColor or Color3.fromRGB(82, 68, 42)
+    local laneModel = Instance.new("Model")
+    laneModel.Name = laneName
+    laneModel:SetAttribute("LaneId", laneId)
+    laneModel:SetAttribute("IsActive", isActive)
+    laneModel:SetAttribute("State", isActive and "ActiveStable" or "Dormant")
+
+    if threadId then
+        laneModel:SetAttribute("ThreadId", threadId)
+    end
+
+    laneModel.Parent = memoryLanes
+
+    local controlNodes = createFolder(laneModel, "ControlNodes")
+    local threadVisuals = createFolder(laneModel, "ThreadVisuals")
+    createFolder(laneModel, "PulseContainer")
+    local interaction = createFolder(laneModel, "Interaction")
+
+    local crystalPosition = worldOrigin.Position + direction * 26 + Vector3.new(0, 2.2, 0)
+    local pylonPosition = worldOrigin.Position + direction * 42 + Vector3.new(0, 2.2, 0)
+    local roofPosition = worldOrigin.Position + direction * 13 + Vector3.new(0, 51, 0)
+    local tunerPosition = memoryCore.Position + direction * 1.45
+
+    local roofAnchor = createMeshPart(
+        laneModel,
+        string.format("RoofAnchor_%02d", laneId),
+        isActive and TunerConfig.Meshes.PhaseARoofAnchorActive or TunerConfig.Meshes.PhaseARoofAnchorDormant,
+        Vector3.new(1.2, 1.2, 1.2),
+        CFrame.new(roofPosition),
+        laneColor,
+        Enum.Material.Neon
     )
+    roofAnchor.Transparency = isActive and 0.18 or 0.72
+    roofAnchor.CanCollide = false
+    local roofAttachment = createAttachment(roofAnchor, string.format("RoofAttachment_%02d", laneId), Vector3.new())
+
+    local roofAnchorMarker = createPart(
+        laneModel,
+        string.format("RoofAnchorMarker_%02d", laneId),
+        Vector3.new(1.25, 1.25, 1.25),
+        CFrame.new(roofPosition),
+        laneColor,
+        Enum.Material.Neon
+    )
+    roofAnchorMarker.Shape = Enum.PartType.Ball
+    roofAnchorMarker.Transparency = isActive and 0.25 or 0.75
+    roofAnchorMarker.CanCollide = false
+
+    local pylonModel = Instance.new("Model")
+    pylonModel.Name = string.format("Pylon_%02d", laneId)
+    pylonModel.Parent = outerPylons
 
     local anchorPart = createPart(
-        threadModel,
+        laneModel,
         "AnchorPart",
         Vector3.new(2.5, 6, 2.5),
-        CFrame.new(anchorPosition + Vector3.new(0, 1, 0)),
+        CFrame.new(pylonPosition),
         Color3.fromRGB(24, 33, 48),
         Enum.Material.Metal
     )
-    anchorPart.Transparency = 0.12
+    anchorPart.Transparency = isActive and 0.12 or 0.42
 
-    local anchorMesh = createMeshPart(
-        threadModel,
-        "AnchorPylonMesh",
-        TunerConfig.Meshes.ThreadAnchorPylon,
-        Vector3.new(3.2, 5.6, 3.2),
+    local pylonShell = createMeshPart(
+        pylonModel,
+        string.format("PylonMesh_%02d", laneId),
+        isActive and TunerConfig.Meshes.PhaseAPerimeterPylonActive or TunerConfig.Meshes.PhaseAPerimeterPylonDormant,
+        Vector3.new(1, 1, 1),
         anchorPart.CFrame,
         Color3.fromRGB(32, 45, 62),
         Enum.Material.Metal
     )
-    anchorMesh.CanCollide = false
+    pylonShell.Transparency = isActive and 0.18 or 0.55
+
+    local pylonLink = Instance.new("ObjectValue")
+    pylonLink.Name = string.format("PylonLink_%02d", laneId)
+    pylonLink.Value = pylonShell
+    pylonLink.Parent = laneModel
 
     local anchorTop = createPart(
-        threadModel,
+        laneModel,
         "AnchorCap",
         Vector3.new(3.4, 0.8, 3.4),
         anchorPart.CFrame * CFrame.new(0, 3.2, 0),
-        TunerConfig.Visuals.stableAccentColor,
+        laneAccent,
         Enum.Material.Neon
     )
+    anchorTop.Transparency = isActive and 0.08 or 0.68
     anchorTop.CanCollide = false
 
-    local nodePosition = ((anchorPosition + Vector3.new(0, 4.2, 0)) + memoryCore.Position) / 2
-    nodePosition = nodePosition + Vector3.new(0, TunerConfig.World.nodeHeight - 4, 0)
+    local pedestal = createMeshPart(
+        laneModel,
+        string.format("CrystalPedestal_%02d", laneId),
+        isActive and TunerConfig.Meshes.PhaseACrystalPedestalActive or TunerConfig.Meshes.PhaseACrystalPedestalDormant,
+        Vector3.new(1, 1, 1),
+        CFrame.new(crystalPosition - Vector3.new(0, 1.25, 0)),
+        isActive and Color3.fromRGB(32, 38, 50) or Color3.fromRGB(22, 26, 34),
+        Enum.Material.Metal
+    )
+    pedestal.Transparency = isActive and 0.02 or 0.28
+    pedestal.CanCollide = false
+
+    local pedestalTrim = createPart(
+        laneModel,
+        string.format("PedestalTrim_%02d", laneId),
+        Vector3.new(5.2, 0.16, 5.2),
+        pedestal.CFrame * CFrame.new(0, 1.18, 0),
+        laneAccent,
+        Enum.Material.Neon
+    )
+    pedestalTrim.Shape = Enum.PartType.Cylinder
+    pedestalTrim.Transparency = isActive and 0.15 or 0.76
+    pedestalTrim.CanCollide = false
+
+    local crystal = createMeshPart(
+        laneModel,
+        string.format("MemoryCrystal_%02d", laneId),
+        isActive and TunerConfig.Meshes.PhaseAMemoryCrystalActive or TunerConfig.Meshes.PhaseAMemoryCrystalDormant,
+        Vector3.new(1.5, 1.5, 1.5),
+        CFrame.new(crystalPosition),
+        laneColor,
+        Enum.Material.Neon
+    )
+    crystal.Transparency = isActive and 0.05 or 0.62
+    crystal.CanCollide = false
+    local crystalAttachment = createAttachment(crystal, string.format("CrystalAttachment_%02d", laneId), Vector3.new())
+
+    if isActive then
+        createPointLight(crystal, laneColor, 1.3, 18)
+    else
+        createPointLight(crystal, Color3.fromRGB(45, 70, 95), 0.25, 8)
+    end
+
+    local nodePositions = {
+        { name = "RoofAnchorNode", position = roofPosition },
+        { name = "UpperTwistNode", position = worldOrigin.Position + direction * 15 + Vector3.new(0, 34, 0) },
+        { name = "MiddleTwistNode", position = worldOrigin.Position + direction * 19 + Vector3.new(0, 23, 0) },
+        { name = "LowerTwistNode", position = worldOrigin.Position + direction * 23 + Vector3.new(0, 11, 0) },
+        { name = "CrystalAnchorNode", position = crystalPosition },
+    }
+
+    for _, nodeInfo in ipairs(nodePositions) do
+        local node = createPart(
+            controlNodes,
+            string.format("%s_%02d", nodeInfo.name, laneId),
+            Vector3.new(0.55, 0.55, 0.55),
+            CFrame.new(nodeInfo.position),
+            laneColor,
+            Enum.Material.Neon
+        )
+        node.Shape = Enum.PartType.Ball
+        node.Transparency = isActive and 0.62 or 0.9
+        node.CanCollide = false
+
+        local pathAttachment = createAttachment(
+            node,
+            string.format("%sAttachment_%02d", nodeInfo.name, laneId),
+            Vector3.new()
+        )
+    end
+
+    local tunerAnchor = createPart(
+        tunerAttachments,
+        string.format("TunerAttachment_%02d", laneId),
+        Vector3.new(0.45, 0.45, 0.45),
+        CFrame.new(tunerPosition),
+        laneColor,
+        Enum.Material.Neon
+    )
+    tunerAnchor.Shape = Enum.PartType.Ball
+    tunerAnchor.Transparency = 1
+    tunerAnchor.CanCollide = false
+    local tunerAttachment = createAttachment(tunerAnchor, string.format("TunerAttachment_%02d", laneId), Vector3.new())
+
+    local descentSamples = createFolder(threadVisuals, "DescentThreadSamples")
+    local descentSegments = createFolder(threadVisuals, "DescentThreadSegments")
+    local descentControlPoints = {}
+
+    for _, nodeInfo in ipairs(nodePositions) do
+        table.insert(descentControlPoints, nodeInfo.position)
+    end
+
+    local sampledDescentPoints = sampleCatmullRomPath(descentControlPoints, isActive and 4 or 2)
+    local descentPathAttachments = {}
+
+    for sampleIndex, samplePosition in ipairs(sampledDescentPoints) do
+        local samplePart = createPart(
+            descentSamples,
+            string.format("DescentSample_%02d", sampleIndex),
+            Vector3.new(0.18, 0.18, 0.18),
+            CFrame.new(samplePosition),
+            laneColor,
+            Enum.Material.Neon
+        )
+        samplePart.Shape = Enum.PartType.Ball
+        samplePart.Transparency = isActive and 0.82 or 0.96
+        samplePart.CanCollide = false
+        samplePart:SetAttribute("LaneId", laneId)
+        samplePart:SetAttribute("SampleIndex", sampleIndex)
+
+        local sampleAttachment = createAttachment(
+            samplePart,
+            string.format("DescentSampleAttachment_%02d", sampleIndex),
+            Vector3.new()
+        )
+        table.insert(descentPathAttachments, sampleAttachment)
+    end
+
+    for segmentIndex = 1, #descentPathAttachments - 1 do
+        local segment = createThreadBeam(
+            descentSegments,
+            string.format("DescentThreadSegment_%02d", segmentIndex),
+            descentPathAttachments[segmentIndex],
+            descentPathAttachments[segmentIndex + 1],
+            isActive and 0.18 or 0.06,
+            isActive and 0.16 or 0.05,
+            laneColor,
+            isActive and 0.08 or 0.9
+        )
+        segment.Enabled = true
+        segment:SetAttribute("LaneId", laneId)
+        segment:SetAttribute("SegmentIndex", segmentIndex)
+    end
+
+    local descentThread = createThreadBeam(
+        threadVisuals,
+        "DescentThread",
+        roofAttachment,
+        crystalAttachment,
+        isActive and 0.06 or 0.04,
+        isActive and 0.05 or 0.03,
+        laneColor,
+        isActive and 0.82 or 0.96
+    )
+    descentThread.Enabled = true
+
+    local convergenceThread = createThreadBeam(
+        threadVisuals,
+        "ConvergenceThread",
+        crystalAttachment,
+        tunerAttachment,
+        isActive and 0.26 or 0.08,
+        isActive and 0.2 or 0.06,
+        laneColor,
+        isActive and 0 or 0.92
+    )
+    convergenceThread.Enabled = true
+
+    local dormantPreview = createThreadBeam(
+        threadVisuals,
+        "DormantThreadPreview",
+        roofAttachment,
+        tunerAttachment,
+        0.05,
+        0.04,
+        Color3.fromRGB(30, 48, 70),
+        isActive and 1 or 0.9
+    )
+    dormantPreview.Enabled = not isActive
+
+    local nodePosition = ((crystalPosition + Vector3.new(0, 1.6, 0)) + memoryCore.Position) / 2
+    nodePosition += Vector3.new(0, TunerConfig.World.nodeHeight - 2, 0)
 
     local nodeOrb = createPart(
-        threadModel,
+        laneModel,
         "NodeOrb",
         Vector3.new(1.2, 1.2, 1.2),
         CFrame.new(nodePosition),
-        TunerConfig.Visuals.stableColor,
+        laneColor,
         Enum.Material.Neon
     )
     nodeOrb.Shape = Enum.PartType.Ball
+    nodeOrb.Transparency = isActive and 0 or 0.78
     nodeOrb.CanCollide = false
-    nodeOrb:SetAttribute("ThreadId", threadId)
-    createPointLight(nodeOrb, TunerConfig.Visuals.stableColor, 1.2, 12)
+
+    if threadId then
+        nodeOrb:SetAttribute("ThreadId", threadId)
+        createPointLight(nodeOrb, TunerConfig.Visuals.stableColor, 1.2, 12)
+    end
 
     local focusReticle = createMeshPart(
-        threadModel,
+        laneModel,
         "FocusReticleMesh",
         TunerConfig.Meshes.FocusReticle,
         Vector3.new(4.7, 4.7, 0.18),
@@ -394,7 +744,7 @@ for index = 1, TunerConfig.Challenge.threadCount do
     focusReticle.CastShadow = false
 
     local markedGlyph = createMeshPart(
-        threadModel,
+        laneModel,
         "MarkedGlyphMesh",
         TunerConfig.Meshes.FocusReticle,
         Vector3.new(4.15, 4.15, 0.18),
@@ -407,8 +757,8 @@ for index = 1, TunerConfig.Challenge.threadCount do
     markedGlyph.CastShadow = false
 
     local nodePart = createPart(
-        threadModel,
-        "NodePart",
+        interaction,
+        string.format("NodePart_%02d", laneId),
         Vector3.new(4.6, 4.6, 4.6),
         nodeOrb.CFrame,
         Color3.new(1, 1, 1),
@@ -417,45 +767,51 @@ for index = 1, TunerConfig.Challenge.threadCount do
     nodePart.Transparency = 1
     nodePart.CanCollide = false
     nodePart.CanTouch = false
-    nodePart:SetAttribute("ThreadId", threadId)
 
-    local anchorAttachment = createAttachment(anchorTop, "AnchorAttachment", Vector3.new(0, 0.45, 0))
-    local coreAttachment = createAttachment(memoryCore, string.format("CoreAttachment_%02d", index), Vector3.new(
-        math.cos(angle) * 1.4,
-        math.sin(index) * 0.35,
-        math.sin(angle) * 1.4
-    ))
+    if threadId then
+        nodePart:SetAttribute("ThreadId", threadId)
+    end
 
-    local beam = Instance.new("Beam")
-    beam.Name = "ThreadBeam"
-    beam.Attachment0 = anchorAttachment
-    beam.Attachment1 = coreAttachment
-    beam.Width0 = 0.26
-    beam.Width1 = 0.2
-    beam.Color = ColorSequence.new(TunerConfig.Visuals.stableColor)
-    beam.LightEmission = 1
-    beam.LightInfluence = 0
-    beam.FaceCamera = true
-    beam.TextureSpeed = 0.25
-    beam.Parent = threadModel
+    local coreAttachment
 
-    local auraBeam = Instance.new("Beam")
-    auraBeam.Name = "AuraBeam"
-    auraBeam.Attachment0 = anchorAttachment
-    auraBeam.Attachment1 = coreAttachment
-    auraBeam.Width0 = 0.7
-    auraBeam.Width1 = 0.55
-    auraBeam.Transparency = NumberSequence.new(0.8)
-    auraBeam.Color = ColorSequence.new(TunerConfig.Visuals.stableAccentColor)
-    auraBeam.LightEmission = 1
-    auraBeam.LightInfluence = 0
-    auraBeam.FaceCamera = true
-    auraBeam.Parent = threadModel
+    if isActive then
+        coreAttachment = createAttachment(memoryCore, string.format("CoreAttachment_%02d", activeOrder), Vector3.new(
+            direction.X * 1.4,
+            math.sin(activeOrder) * 0.35,
+            direction.Z * 1.4
+        ))
+        convergenceThread.Attachment1 = coreAttachment
+    end
+
+    local beam = createThreadBeam(
+        threadVisuals,
+        "ThreadBeam",
+        crystalAttachment,
+        coreAttachment or tunerAttachment,
+        isActive and 0.26 or 0.08,
+        isActive and 0.2 or 0.06,
+        laneColor,
+        isActive and 0 or 0.92
+    )
+    beam.Enabled = isActive
+
+    local auraBeam = createThreadBeam(
+        threadVisuals,
+        "AuraBeam",
+        crystalAttachment,
+        coreAttachment or tunerAttachment,
+        isActive and 0.7 or 0.18,
+        isActive and 0.55 or 0.12,
+        laneAccent,
+        isActive and 0.8 or 0.96
+    )
+    auraBeam.Enabled = isActive
 
     local labelGui = Instance.new("BillboardGui")
     labelGui.Name = "ThreadBillboard"
     labelGui.Adornee = nodeOrb
     labelGui.AlwaysOnTop = true
+    labelGui.Enabled = isActive
     labelGui.Size = UDim2.fromOffset(150, 84)
     labelGui.StudsOffset = Vector3.new(0, 2.7, 0)
     labelGui.Parent = nodeOrb
@@ -465,9 +821,9 @@ for index = 1, TunerConfig.Challenge.threadCount do
         "NameLabel",
         UDim2.fromScale(1, 0.32),
         UDim2.fromScale(0, 0),
-        string.format("THREAD %02d", index),
+        threadId and string.format("THREAD %02d", activeOrder) or string.format("LANE %02d", laneId),
         18,
-        TunerConfig.Visuals.stableAccentColor
+        laneAccent
     )
     nameLabel.TextXAlignment = Enum.TextXAlignment.Center
 
@@ -476,9 +832,9 @@ for index = 1, TunerConfig.Challenge.threadCount do
         "StatusLabel",
         UDim2.fromScale(1, 0.28),
         UDim2.fromScale(0, 0.34),
-        "Stable",
+        isActive and "Stable" or "Dormant",
         16,
-        TunerConfig.Visuals.stableColor
+        laneColor
     )
     statusLabel.TextXAlignment = Enum.TextXAlignment.Center
 

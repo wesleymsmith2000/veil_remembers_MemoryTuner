@@ -1,0 +1,24 @@
+Phase A Sprite Pack Codex Import Notes
+
+Upload these PNGs to Roblox and store their asset ids in a config module:
+
+- PhaseAIconSheet
+- PhaseAVFXParticleSheet
+- PhaseAPulseStripSheet
+- PhaseAUISheet
+
+Use the atlas JSON files to map names to source rectangles.
+
+Recommended bindings:
+- active_lane / dormant_lane: lane labels and debug markers.
+- memory_crystal_active / memory_crystal_dormant: crystal status labels.
+- focused: FocusReticle BillboardGui ImageLabel.
+- marked: MarkedGlyph BillboardGui ImageLabel.
+- warning/static/drift/dissonance/overload: thread problem labels.
+- soft_glow_*: ParticleEmitter texture for crystal/oculus glow.
+- ripple_ring_*: pulse arrival / crystal reaction.
+- static_noise_*: Static problem effect.
+- spark_shard_red: Overload problem effect.
+- pulse_* rows: future pulse packet animation from oculus to crystal.
+
+For Phase A, only active lanes 01, 03, 05, and 07 should show active icons/labels. Dormant lanes 02, 04, 06, and 08 should use dim/dormant icons or no label.

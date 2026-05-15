@@ -1,0 +1,98 @@
+{
+  "soft_glow_cyan": {
+    "x": 0,
+    "y": 0,
+    "w": 256,
+    "h": 256
+  },
+  "soft_glow_gold": {
+    "x": 256,
+    "y": 0,
+    "w": 256,
+    "h": 256
+  },
+  "soft_glow_violet": {
+    "x": 512,
+    "y": 0,
+    "w": 256,
+    "h": 256
+  },
+  "soft_glow_red": {
+    "x": 768,
+    "y": 0,
+    "w": 256,
+    "h": 256
+  },
+  "ripple_ring_cyan": {
+    "x": 0,
+    "y": 256,
+    "w": 256,
+    "h": 256
+  },
+  "ripple_ring_gold": {
+    "x": 256,
+    "y": 256,
+    "w": 256,
+    "h": 256
+  },
+  "ripple_ring_violet": {
+    "x": 512,
+    "y": 256,
+    "w": 256,
+    "h": 256
+  },
+  "ripple_ring_red": {
+    "x": 768,
+    "y": 256,
+    "w": 256,
+    "h": 256
+  },
+  "star_burst_cyan": {
+    "x": 0,
+    "y": 512,
+    "w": 256,
+    "h": 256
+  },
+  "star_burst_gold": {
+    "x": 256,
+    "y": 512,
+    "w": 256,
+    "h": 256
+  },
+  "static_noise_white": {
+    "x": 512,
+    "y": 512,
+    "w": 256,
+    "h": 256
+  },
+  "static_noise_violet": {
+    "x": 768,
+    "y": 512,
+    "w": 256,
+    "h": 256
+  },
+  "spark_shard_red": {
+    "x": 0,
+    "y": 768,
+    "w": 256,
+    "h": 256
+  },
+  "spark_shard_gold": {
+    "x": 256,
+    "y": 768,
+    "w": 256,
+    "h": 256
+  },
+  "spark_shard_cyan": {
+    "x": 512,
+    "y": 768,
+    "w": 256,
+    "h": 256
+  },
+  "smoke_wisp_blue": {
+    "x": 768,
+    "y": 768,
+    "w": 256,
+    "h": 256
+  }
+}

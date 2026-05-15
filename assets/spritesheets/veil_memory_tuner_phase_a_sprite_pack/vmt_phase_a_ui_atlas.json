@@ -1,0 +1,62 @@
+{
+  "panel_border_gold": {
+    "x": 0,
+    "y": 0,
+    "w": 384,
+    "h": 160
+  },
+  "button_cleanse": {
+    "x": 0,
+    "y": 192,
+    "w": 256,
+    "h": 96
+  },
+  "button_anchor": {
+    "x": 256,
+    "y": 192,
+    "w": 256,
+    "h": 96
+  },
+  "button_harmonize": {
+    "x": 512,
+    "y": 192,
+    "w": 256,
+    "h": 96
+  },
+  "button_vent": {
+    "x": 768,
+    "y": 192,
+    "w": 256,
+    "h": 96
+  },
+  "stability_meter_sample": {
+    "x": 0,
+    "y": 320,
+    "w": 448,
+    "h": 80
+  },
+  "memory_meter_sample": {
+    "x": 0,
+    "y": 416,
+    "w": 448,
+    "h": 80
+  },
+  "active_lane_label": {
+    "x": 512,
+    "y": 320,
+    "w": 384,
+    "h": 64
+  },
+  "dormant_lane_label": {
+    "x": 512,
+    "y": 384,
+    "w": 384,
+    "h": 64
+  },
+  "warning_banner": {
+    "x": 512,
+    "y": 448,
+    "w": 384,
+    "h": 64
+  }
+}

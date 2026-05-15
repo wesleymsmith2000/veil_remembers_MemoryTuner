@@ -1,0 +1,31 @@
+Implement Phase A chamber placement using this model pack.
+
+Import the Phase A meshes and create Workspace/TunerPrototype with:
+- Chamber/FloorRing
+- Chamber/RoofOculus
+- Chamber/DomeRibs
+- Chamber/OuterPylons/Pylon_01 ... Pylon_08
+- CentralTuner/TunerPlatform
+- MemoryLanes/Lane_01 ... Lane_08
+
+Place all 8 lanes physically. Set:
+- IsActive=true for Lane_01, Lane_03, Lane_05, Lane_07
+- IsActive=false for Lane_02, Lane_04, Lane_06, Lane_08
+
+Use:
+- crystal ring radius = 26 studs
+- pylon radius = 42 studs
+- roof anchor radius = 13 studs
+- roof oculus height = 52 studs
+
+For each lane create:
+- RoofAnchor_##
+- ControlNodes/RoofAnchorNode_##, UpperTwistNode_##, MiddleTwistNode_##, LowerTwistNode_##, CrystalAnchorNode_##
+- CrystalPedestal_##
+- MemoryCrystal_##
+- ThreadVisuals
+- PulseContainer
+- Interaction/NodePart_## and BillboardLabel_##
+
+Active lanes should be bright and selectable. Dormant lanes should be dim and non-selectable.
+Do not implement moving pulses or twisting yet.

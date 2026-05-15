@@ -1,0 +1,38 @@
+{
+  "pulse_cyan": {
+    "x": 0,
+    "y": 0,
+    "w": 1024,
+    "h": 128,
+    "frames": 8,
+    "frame_w": 128,
+    "frame_h": 128
+  },
+  "pulse_gold": {
+    "x": 0,
+    "y": 128,
+    "w": 1024,
+    "h": 128,
+    "frames": 8,
+    "frame_w": 128,
+    "frame_h": 128
+  },
+  "pulse_violet": {
+    "x": 0,
+    "y": 256,
+    "w": 1024,
+    "h": 128,
+    "frames": 8,
+    "frame_w": 128,
+    "frame_h": 128
+  },
+  "pulse_red": {
+    "x": 0,
+    "y": 384,
+    "w": 1024,
+    "h": 128,
+    "frames": 8,
+    "frame_w": 128,
+    "frame_h": 128
+  }
+}
